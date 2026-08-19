@@ -31,11 +31,11 @@ struct GameView: View {
             MenuOverlay(best: state.best, onStart: start)
                 .transition(.opacity)
         case .playing:
-            HUDOverlay(score: state.score, coins: state.coins, best: state.best)
+            HUDOverlay(score: state.score, starfish: state.starfish, best: state.best)
                 .transition(.opacity)
         case .gameOver:
             GameOverOverlay(score: state.score,
-                            coins: state.coins,
+                            starfish: state.starfish,
                             best: state.best,
                             didBeatBest: state.didBeatBest,
                             onRetry: start,

@@ -18,7 +18,7 @@ enum Haptics {
         heavy.prepare()
     }
 
-    static func coin()     { guard isEnabled else { return }; light.impactOccurred(intensity: 0.7) }
+    static func pickup()   { guard isEnabled else { return }; light.impactOccurred(intensity: 0.7) }
     static func nearMiss() { guard isEnabled else { return }; light.impactOccurred(intensity: 0.4) }
     static func tap()      { guard isEnabled else { return }; medium.impactOccurred() }
     static func crash()    { guard isEnabled else { return }; heavy.impactOccurred(); notice.notificationOccurred(.error) }

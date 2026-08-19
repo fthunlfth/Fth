@@ -13,7 +13,7 @@ final class GameState: ObservableObject {
 
     @Published private(set) var phase: GamePhase = .menu
     @Published private(set) var score: Int = 0
-    @Published private(set) var coins: Int = 0
+    @Published private(set) var starfish: Int = 0
     @Published private(set) var best: Int = UserDefaults.standard.integer(forKey: GameState.bestKey)
     /// Son turda rekor kırıldı mı — oyun sonu ekranı bunu gösteriyor.
     @Published private(set) var didBeatBest = false
@@ -26,7 +26,7 @@ final class GameState: ObservableObject {
 
     func beginRun() {
         score = 0
-        coins = 0
+        starfish = 0
         didBeatBest = false
         phase = .playing
     }
@@ -36,8 +36,8 @@ final class GameState: ObservableObject {
         score = newValue
     }
 
-    func collectCoin() {
-        coins += 1
+    func collectStarfish() {
+        starfish += 1
     }
 
     func registerNearMiss() {

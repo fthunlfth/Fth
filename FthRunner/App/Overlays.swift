@@ -4,7 +4,7 @@ import SwiftUI
 
 struct HUDOverlay: View {
     let score: Int
-    let coins: Int
+    let starfish: Int
     let best: Int
 
     var body: some View {
@@ -24,10 +24,10 @@ struct HUDOverlay: View {
                 Spacer()
 
                 HStack(spacing: 6) {
-                    Circle()
-                        .fill(Palette.gold)
-                        .frame(width: 12, height: 12)
-                    Text("\(coins)")
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Palette.gold)
+                    Text("\(starfish)")
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.9))
                 }
@@ -53,12 +53,12 @@ struct MenuOverlay: View {
             Spacer()
 
             VStack(spacing: 8) {
-                Text("KAÇIŞ")
+                Text("KAYIK")
                     .font(.system(size: 62, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                     .shadow(color: Palette.accent.opacity(0.7), radius: 22)
 
-                Text("Parmağını sürükle, duvarlardan geç.")
+                Text("Parmağını sürükle, denizde yolunu bul.")
                     .font(.system(size: 15, weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.6))
             }
@@ -73,7 +73,7 @@ struct MenuOverlay: View {
 
             PrimaryButton(title: "BAŞLA", tint: Palette.accent, action: onStart)
 
-            Text("Kıl payı geçişler ve altınlar ekstra puan.")
+            Text("Kıl payı geçişler ve deniz yıldızları ekstra puan.")
                 .font(.system(size: 12, weight: .medium, design: .rounded))
                 .foregroundStyle(.white.opacity(0.35))
                 .padding(.bottom, 34)
@@ -87,7 +87,7 @@ struct MenuOverlay: View {
 
 struct GameOverOverlay: View {
     let score: Int
-    let coins: Int
+    let starfish: Int
     let best: Int
     let didBeatBest: Bool
     let onRetry: () -> Void
@@ -97,7 +97,7 @@ struct GameOverOverlay: View {
         VStack(spacing: 24) {
             Spacer()
 
-            Text(didBeatBest ? "YENİ REKOR" : "ÇARPTIN")
+            Text(didBeatBest ? "YENİ REKOR" : "DEVRİLDİN")
                 .font(.system(size: 34, weight: .black, design: .rounded))
                 .foregroundStyle(didBeatBest ? Palette.gold : Palette.danger)
 
@@ -107,7 +107,7 @@ struct GameOverOverlay: View {
 
             HStack(spacing: 26) {
                 StatBadge(label: "REKOR", value: "\(best)", tint: .white.opacity(0.75))
-                StatBadge(label: "ALTIN", value: "\(coins)", tint: Palette.gold)
+                StatBadge(label: "YILDIZ", value: "\(starfish)", tint: Palette.gold)
             }
 
             Spacer()
