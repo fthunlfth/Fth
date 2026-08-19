@@ -219,11 +219,12 @@ final class BoatNode: SKNode {
         }
 
         let smile = CGMutablePath()
-        smile.addArc(center: CGPoint(x: 0, y: -r * 0.30), radius: r * 0.30,
-                     startAngle: .pi * 1.15, endAngle: .pi * 1.85, clockwise: true)
+        smile.move(to: CGPoint(x: -r * 0.28, y: -r * 0.28))
+        smile.addQuadCurve(to: CGPoint(x: r * 0.28, y: -r * 0.28),
+                           control: CGPoint(x: 0, y: -r * 0.56))
         let smileNode = SKShapeNode(path: smile)
         smileNode.strokeColor = Palette.hullDark
-        smileNode.lineWidth = 1.2
+        smileNode.lineWidth = r * 0.12
         smileNode.lineCap = .round
         head.addChild(smileNode)
 
