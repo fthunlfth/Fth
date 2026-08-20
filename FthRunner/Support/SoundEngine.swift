@@ -20,6 +20,7 @@ final class SoundEngine {
         case sparkle
         case button
         case seagull
+        case extraLife
     }
 
     /// Sessize alma tercihi cihazda saklanıyor.

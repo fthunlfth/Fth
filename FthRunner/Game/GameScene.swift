@@ -442,7 +442,48 @@ final class GameScene: SKScene {
     /// Yeni arkadaş kayığa bindiği anda üstünde beliren şerit.
     private func showJoinBanner(text: String) {
         SoundEngine.shared.play(.sparkle)
+        showBanner(text: text, tint: Palette.lifeVest)
+    }
 
+    /// Onuncu deniz yıldızı bir can kazandırdı.
+    private func awardExtraLife() {
+        Haptics.celebrate()
+        SoundEngine.shared.play(.extraLife)
+        showBanner(text: "+1 CAN", tint: Palette.heart)
+
+        // Kalp kayıktan yukarı süzülüp kayboluyor.
+        let heart = SKShapeNode(path: GameScene.heartPath(size: 26))
+        heart.fillColor = Palette.heart
+        heart.strokeColor = .white
+        heart.lineWidth = 2
+        heart.position = CGPoint(x: boat.position.x, y: boat.position.y + Tuning.boatHeight)
+        heart.zPosition = 65
+        effectsLayer.addChild(heart)
+        heart.run(.sequence([
+            .group([
+                .moveBy(x: 0, y: 90, duration: 0.9),
+                .scale(to: 1.6, duration: 0.9),
+                .fadeOut(withDuration: 0.9)
+            ]),
+            .removeFromParent()
+        ]))
+    }
+
+    private static func heartPath(size: CGFloat) -> CGPath {
+        let path = CGMutablePath()
+        let half = size / 2
+        path.move(to: CGPoint(x: 0, y: -half))
+        path.addCurve(to: CGPoint(x: 0, y: half * 0.55),
+                      control1: CGPoint(x: -size, y: -half * 0.1),
+                      control2: CGPoint(x: -half * 0.5, y: size * 0.75))
+        path.addCurve(to: CGPoint(x: 0, y: -half),
+                      control1: CGPoint(x: half * 0.5, y: size * 0.75),
+                      control2: CGPoint(x: size, y: -half * 0.1))
+        path.closeSubpath()
+        return path
+    }
+
+    private func showBanner(text: String, tint: UIColor) {
         let banner = SKNode()
         banner.zPosition = 70
         banner.position = CGPoint(x: size.width / 2, y: boat.position.y + Tuning.boatHeight * 3.2)
@@ -458,7 +499,7 @@ final class GameScene: SKScene {
         let plateSize = CGSize(width: label.frame.width + padding.width * 2,
                                height: label.frame.height + padding.height * 2)
         let plate = SKShapeNode(rectOf: plateSize, cornerRadius: plateSize.height / 2)
-        plate.fillColor = Palette.lifeVest
+        plate.fillColor = tint
         plate.strokeColor = .white
         plate.lineWidth = 2.5
 
@@ -528,9 +569,13 @@ final class GameScene: SKScene {
             starfish.collect()
             starfishes.removeAll { $0 === starfish }
             bonusScore += Tuning.starfishScore
-            state?.collectStarfish()
-            Haptics.pickup()
-            SoundEngine.shared.play(.pickup)
+
+            if state?.collectStarfish() == true {
+                awardExtraLife()
+            } else {
+                Haptics.pickup()
+                SoundEngine.shared.play(.pickup)
+            }
         }
 
         guard !isInvulnerable else { return }

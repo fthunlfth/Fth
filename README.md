@@ -36,8 +36,12 @@ yükseğe çıkar (Mario'daki gibi değişken zıplama). Sudan ayrıldıktan son
 bir tolerans (coyote time) ve havadayken erken basılan zıplamayı hatırlayan bir
 tampon var — yani zamanlaman biraz şaşarsa oyun seni affediyor.
 
-**İki canın var.** Çarptığında bir can gider ve kısa süre dokunulmaz olursun;
-ikinci çarpışmada bölümün başına dönersin.
+**İki canla başlarsın.** Çarptığında bir can gider ve kısa süre dokunulmaz
+olursun; canlar bitince bölümün başına dönersin.
+
+**10 deniz yıldızı bir can ediyor**, en fazla üç cana kadar. Göstergedeki
+`★ 7/10` sıradaki cana ne kaldığını söylüyor. Canlar tavandayken sayaç yine
+sıfırlanır — yıldızlar zaten tanesi +5 puan.
 
 ## Bölümler
 
@@ -74,8 +78,8 @@ ile tanımlı (şimdilik sadece Ted); adı olmayanlar türüyle anılıyor.
 | **Martı** | Tek "zıplamama" engeli: yerinde kalırsan altından geçersin, zıplarsan çarparsın. |
 | **Girdap** | Alçak ama çok geniş. Kısa zıplama yetmez. |
 
-Deniz yıldızları zıplama yayı boyunca üçlü diziliyor — hem +5 puan, hem de
-nereden atlaman gerektiğini gösteriyor.
+Deniz yıldızları zıplama yayı boyunca üçlü diziliyor: hem +5 puan, hem
+cana giden sayaç, hem de nereden atlaman gerektiğini gösteren bir işaret.
 
 ## Dosya düzeni
 
@@ -129,6 +133,7 @@ aynı sesi veriyor.
 | Can kaybı | 520 → 150 Hz inen yumuşak kare + gürültü |
 | Batış | inen üç nota (A4 → F4 → C4) |
 | Bölüm sonu | yükselen dörtlü + uzun kapanış akoru |
+| Yeni can | beşli aralıklarla yükselen üç nota, fanfardan kısa |
 | Martı | iki hızlı inen cıvıltı, ara sıra duyuluyor |
 | Deniz (döngü) | 8 saniyelik boğuk uğultu; salınımlar tam sayı çevrim yaptığı ve kuyruk başa karıştırıldığı için ek yeri duyulmuyor |
 
@@ -160,7 +165,9 @@ değiştirdiğinde sonuç birebir öngörülebilir oluyor.
 - **Bölüm uzun/kısa** → `Level.all` içindeki `duration` (saniye)
 - **Bölüm zor/kolay** → `Level.all` içindeki `scrollSpeed` ve `gapRange`
 - **Engeller çok sık** → `gapRange` aralığını genişlet
-- **Çok çabuk ölüyorum** → `Tuning.livesPerLevel` (şu an 2), `invulnerabilityTime`
+- **Çok çabuk ölüyorum** → `Tuning.startingLives` (şu an 2), `invulnerabilityTime`
+- **Can kazanmak çok kolay/zor** → `Tuning.starfishPerExtraLife` (şu an 10),
+  tavan için `Tuning.maxLives` (şu an 3)
 - **Deniz çok/az dalgalı** → `waveAmplitude`, `waveLength`
 - **Ses çok/az** → `SoundEngine.applyVolumes` içindeki iki değer
   (efektler 0.9, dalga sesi 0.30)

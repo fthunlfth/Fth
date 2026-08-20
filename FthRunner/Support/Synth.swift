@@ -149,7 +149,8 @@ enum Synth {
             .fanfare: fanfare(),
             .sparkle: sparkle(),
             .button: button(),
-            .seagull: seagull()
+            .seagull: seagull(),
+            .extraLife: extraLife()
         ], ambience: waves())
     }
 
@@ -219,6 +220,17 @@ enum Synth {
             (0.00, tone(duration: 0.09, from: 1_318, wave: triangle, decay: 0.045, gain: 0.24)),
             (0.06, tone(duration: 0.09, from: 1_760, wave: triangle, decay: 0.045, gain: 0.22)),
             (0.12, tone(duration: 0.22, from: 2_093, wave: sine, decay: 0.10, gain: 0.20))
+        ])
+    }
+
+    /// Onuncu deniz yıldızı bir can kazandırdı: sıcak, yükselen üç nota.
+    /// Bölüm sonu fanfarından kısa ve farklı olsun diye beşli aralıklarla.
+    static func extraLife() -> [Float] {
+        sequence([
+            (0.00, tone(duration: 0.12, from: 784, wave: triangle, decay: 0.06, gain: 0.30)),
+            (0.09, tone(duration: 0.12, from: 1_046, wave: triangle, decay: 0.06, gain: 0.30)),
+            (0.18, tone(duration: 0.42, from: 1_318, wave: triangle, decay: 0.20, gain: 0.32)),
+            (0.18, tone(duration: 0.42, from: 659, wave: sine, decay: 0.20, gain: 0.20))
         ])
     }
 

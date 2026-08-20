@@ -69,7 +69,7 @@ struct GameView: View {
         case .playing:
             HUDOverlay(level: state.level,
                        score: state.score,
-                       starfish: state.starfish,
+                       starfishTowardLife: state.starfishTowardLife,
                        lives: state.lives,
                        progress: state.progress)
 

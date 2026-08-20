@@ -5,7 +5,8 @@ import SwiftUI
 struct HUDOverlay: View {
     let level: Level
     let score: Int
-    let starfish: Int
+    /// Sıradaki cana kalan yıldız sayacı.
+    let starfishTowardLife: Int
     let lives: Int
     let progress: Double
 
@@ -21,24 +22,27 @@ struct HUDOverlay: View {
 
                 Spacer()
 
+                // Sıradaki cana ne kadar kaldığı: çocuğun asıl merak ettiği sayı.
                 HStack(spacing: 5) {
                     Image(systemName: "star.fill")
                         .font(.system(size: 13))
                         .foregroundStyle(Palette.gold)
-                    Text("\(starfish)")
+                    Text("\(starfishTowardLife)/\(Tuning.starfishPerExtraLife)")
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
+                        .monospacedDigit()
                 }
 
                 Spacer()
 
                 HStack(spacing: 4) {
-                    ForEach(0..<Tuning.livesPerLevel, id: \.self) { index in
+                    ForEach(0..<Tuning.maxLives, id: \.self) { index in
                         Image(systemName: index < lives ? "heart.fill" : "heart")
                             .font(.system(size: 15))
                             .foregroundStyle(index < lives ? Palette.life : .white.opacity(0.3))
                     }
                 }
+                .animation(.snappy(duration: 0.25), value: lives)
             }
 
             ProgressTrack(level: level, progress: progress)
@@ -192,7 +196,7 @@ struct LevelIntroOverlay: View {
             }
 
             if showControls {
-                Text("Ekrana dokun: zıpla.\nBasılı tut: daha yükseğe.")
+                Text("Ekrana dokun: zıpla.\nBasılı tut: daha yükseğe.\n\n10 deniz yıldızı = 1 can (en fazla \(Tuning.maxLives)).")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.65))
                     .multilineTextAlignment(.center)

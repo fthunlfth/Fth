@@ -43,8 +43,12 @@ enum Tuning {
     static let waveSpeed2: CGFloat = 2.3
 
     // MARK: - Can
-    /// Bu kadar çarpışmadan sonra bölüm baştan başlıyor.
-    static let livesPerLevel = 2
+    /// Bölüme kaç canla başlanıyor. Canlar bitince bölüm baştan başlar.
+    static let startingLives = 2
+    /// Can göstergesindeki kalp sayısı ve tavan.
+    static let maxLives = 3
+    /// Kaç deniz yıldızı bir can ediyor.
+    static let starfishPerExtraLife = 10
     /// Yedikten sonra dokunulmazlık süresi.
     static let invulnerabilityTime: TimeInterval = 1.5
 

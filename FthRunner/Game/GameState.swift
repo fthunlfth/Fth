@@ -22,7 +22,9 @@ final class GameState: ObservableObject {
     @Published private(set) var levelIndex = 0
     @Published private(set) var score = 0
     @Published private(set) var starfish = 0
-    @Published private(set) var lives = Tuning.livesPerLevel
+    @Published private(set) var lives = Tuning.startingLives
+    /// Sıradaki cana kalan yıldız sayacı; her canda sıfırlanıyor.
+    @Published private(set) var starfishTowardLife = 0
     /// Bölümün ne kadarı geçildi (0...1).
     @Published private(set) var progress: Double = 0
     /// Kayığa katılmış hayvanlar — cihazda saklanıyor.
@@ -78,7 +80,8 @@ final class GameState: ObservableObject {
     func beginLevel() {
         score = 0
         starfish = 0
-        lives = Tuning.livesPerLevel
+        lives = Tuning.startingLives
+        starfishTowardLife = 0
         progress = 0
         phase = .playing
     }
@@ -95,8 +98,18 @@ final class GameState: ObservableObject {
         progress = clamped
     }
 
-    func collectStarfish() {
+    /// Deniz yıldızı toplandı. Bu yıldız bir can kazandırdıysa `true` döner.
+    /// Canlar tavandaysa sayaç yine sıfırlanır — yıldızlar zaten puan veriyor.
+    func collectStarfish() -> Bool {
         starfish += 1
+        starfishTowardLife += 1
+
+        guard starfishTowardLife >= Tuning.starfishPerExtraLife else { return false }
+        starfishTowardLife = 0
+
+        guard lives < Tuning.maxLives else { return false }
+        lives += 1
+        return true
     }
 
     /// Bir can eksilir. Canlar bittiyse `false` döner.
