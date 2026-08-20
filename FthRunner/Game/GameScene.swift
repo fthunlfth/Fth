@@ -238,6 +238,7 @@ final class GameScene: SKScene {
         boat.setWakeActive(false)
         boat.splash(in: effectsLayer, strength: 0.6)
         Haptics.jump()
+        SoundEngine.shared.play(.jump)
     }
 
     private func land(at surfaceY: CGFloat) {
@@ -248,6 +249,8 @@ final class GameScene: SKScene {
         boat.setWakeActive(true)
         boat.landingSquash()
         boat.splash(in: effectsLayer, strength: 0.5 + impact)
+        // Sert iniş daha gür şapırdasın.
+        SoundEngine.shared.play(.splash, volume: Float(min(1, 0.45 + impact * 0.45)))
         if impact > 0.4 { Haptics.land() }
     }
 
@@ -351,6 +354,10 @@ final class GameScene: SKScene {
             let seagull = SeagullNode()
             seagull.build(flyHeight: .random(in: 108...142))
             node = seagull
+            // Her martı bağırmasın; ara sıra duyulunca daha canlı oluyor.
+            if Double.random(in: 0...1) < 0.35 {
+                SoundEngine.shared.play(.seagull)
+            }
 
         case .whirlpool:
             let whirlpool = WhirlpoolNode()
@@ -413,6 +420,7 @@ final class GameScene: SKScene {
         bonusScore += Tuning.levelClearScore
         state?.setScore(Int(cameraX / Tuning.distancePerScorePoint) + bonusScore)
         Haptics.celebrate()
+        SoundEngine.shared.play(.fanfare)
 
         let landingPoint = CGPoint(x: boat.position.x - island.position.x - Tuning.boatLength * 0.25,
                                    y: boat.position.y - island.position.y + Tuning.boatHeight * 0.6)
@@ -433,6 +441,8 @@ final class GameScene: SKScene {
 
     /// Yeni arkadaş kayığa bindiği anda üstünde beliren şerit.
     private func showJoinBanner(text: String) {
+        SoundEngine.shared.play(.sparkle)
+
         let banner = SKNode()
         banner.zPosition = 70
         banner.position = CGPoint(x: size.width / 2, y: boat.position.y + Tuning.boatHeight * 3.2)
@@ -520,6 +530,7 @@ final class GameScene: SKScene {
             bonusScore += Tuning.starfishScore
             state?.collectStarfish()
             Haptics.pickup()
+            SoundEngine.shared.play(.pickup)
         }
 
         guard !isInvulnerable else { return }
@@ -548,12 +559,14 @@ final class GameScene: SKScene {
             boat.flashHurt(duration: Tuning.invulnerabilityTime)
             flashScreen(color: Palette.buoy, alpha: 0.35)
             Haptics.hurt()
+            SoundEngine.shared.play(.hurt)
         } else {
             isRunning = false
             scrollSpeed = 0
             boat.capsize(in: effectsLayer)
             flashScreen(color: Palette.buoy, alpha: 0.5)
             Haptics.crash()
+            SoundEngine.shared.play(.gameOver)
             state.endRun()
         }
     }

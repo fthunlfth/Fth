@@ -5,9 +5,9 @@ Her bölümün sonunda bir hayvan kayığa katılıyor; ilki mavi gözlü beyaz
 kedi **Ted**.
 
 Yandan görünüş, tek dokunuşla zıplama, beş bölüm. SwiftUI + SpriteKit.
-Harici bağımlılık yok, **görsel dosya yok** — Hira, ayıcığı, kedi, kayık ve
-bütün engeller Swift içinde vektör şekillerle çiziliyor, proje klonlar
-klonlamaz çalışır.
+Harici bağımlılık yok, **hiç varlık dosyası yok** — Hira, ayıcığı, kedi, kayık
+ve bütün engeller Swift içinde vektör şekillerle çiziliyor; sesler de aynı
+şekilde kodla üretiliyor. Proje klonlar klonlamaz çalışır.
 
 Açılış ekranında Hira kumsalda duruyor: elinde küçük gri ayıcığı, yanında
 mavi gözlü beyaz kedisi.
@@ -107,10 +107,35 @@ FthRunner/
   Support/
     Wave.swift                # su yüzeyi matematiği (tek kaynak)
     Fonts.swift               # sahne etiketleri için yuvarlak sistem fontu
+    SoundEngine.swift         # AVAudioEngine hattı, ses havuzu, sessize alma
+    Synth.swift               # bütün seslerin sıfırdan üretimi
     Palette.swift             # karakter ve engel renkleri
     Haptics.swift             # titreşim
     TextureFactory.swift      # kod ile doku üretimi
 ```
+
+## Ses
+
+Ses dosyası da yok. `Synth.swift` bütün efektleri örnek örnek hesaplıyor:
+üçgen/sinüs/yumuşak kare dalgalar, üstel zarflar ve alçak geçiren süzgeçten
+geçmiş gürültü. Rastgelelik sabit tohumlu, yani oyun her açılışta birebir
+aynı sesi veriyor.
+
+| Ses | Nasıl üretiliyor |
+|---|---|
+| Zıplama | 420 → 880 Hz yükselen üçgen + kısa hışırtı |
+| Suya iniş | parlaktan boğuğa kapanan gürültü + tok bas vuruş |
+| Deniz yıldızı | iki notalık parlak kıvılcım (C6 → G6) |
+| Can kaybı | 520 → 150 Hz inen yumuşak kare + gürültü |
+| Batış | inen üç nota (A4 → F4 → C4) |
+| Bölüm sonu | yükselen dörtlü + uzun kapanış akoru |
+| Martı | iki hızlı inen cıvıltı, ara sıra duyuluyor |
+| Deniz (döngü) | 8 saniyelik boğuk uğultu; salınımlar tam sayı çevrim yaptığı ve kuyruk başa karıştırıldığı için ek yeri duyulmuyor |
+
+Sesler arka planda hesaplanıyor, açılışta takılma olmuyor. Ses oturumu
+`.ambient` + `mixWithOthers`: kullanıcının müziğini kesmiyor ve telefonun
+sessize alma düğmesine uyuyor. Menüdeki hoparlör düğmesi tercihi cihazda
+saklıyor.
 
 ## Nasıl çalışıyor
 
@@ -137,6 +162,9 @@ değiştirdiğinde sonuç birebir öngörülebilir oluyor.
 - **Engeller çok sık** → `gapRange` aralığını genişlet
 - **Çok çabuk ölüyorum** → `Tuning.livesPerLevel` (şu an 2), `invulnerabilityTime`
 - **Deniz çok/az dalgalı** → `waveAmplitude`, `waveLength`
+- **Ses çok/az** → `SoundEngine.applyVolumes` içindeki iki değer
+  (efektler 0.9, dalga sesi 0.30)
+- **Bir sesi değiştirmek** → `Synth.swift` içinde o efektin tarifi tek fonksiyon
 
 Hira'nın görünümü `Support/Palette.swift` renkleriyle değişiyor. Kayıktaki
 hâli `BoatNode.swift` içindeki `buildOutfit` / `buildHead` / `buildDanglingLeg`
@@ -148,6 +176,5 @@ Hayvanlar `AnimalNode.swift` içinde, her biri kendi `build...` fonksiyonunda.
 - [ ] Güçlendirmeler: can yeleği kalkanı, kürek hızlandırma, ayıcık mıknatısı
 - [ ] Bölüm sonu canavarı (dev ahtapot?)
 - [ ] Toplanan hayvanların oyun içinde işe yaraması (kedi yıldız çekiyor vb.)
-- [ ] Ses ve müzik (dalga, martı, fırtına)
 - [ ] Game Center skor tablosu
 - [ ] Daha fazla bölüm ve hayvan

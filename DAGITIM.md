@@ -106,7 +106,6 @@ oyunu gerçekten yayımlamak istediğinde konuşulur.
 - [ ] Bundle ID kendine ait
 - [ ] `MARKETING_VERSION` ve `CURRENT_PROJECT_VERSION` doğru
 - [ ] Yatay ekranda açılıyor, dikeye dönmüyor
-- [ ] Sesin olmadığını söyle — oyun şu an sessiz
 
 App Store Connect gizlilik bölümünde **"Data Not Collected"** işaretle:
 oyun hiçbir veri toplamıyor, ağa çıkmıyor. Tek sakladığı şey cihazın kendi

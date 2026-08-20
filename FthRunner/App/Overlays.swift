@@ -497,3 +497,25 @@ struct SecondaryButton: View {
         .buttonStyle(.plain)
     }
 }
+
+/// Sesi açıp kapatan küçük düğme. Tercih cihazda saklanıyor.
+struct SoundToggle: View {
+    @Binding var isMuted: Bool
+
+    var body: some View {
+        Button {
+            isMuted.toggle()
+            SoundEngine.shared.isMuted = isMuted
+            if !isMuted { SoundEngine.shared.play(.button) }
+            Haptics.tap()
+        } label: {
+            Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white.opacity(isMuted ? 0.5 : 0.9))
+                .frame(width: 42, height: 42)
+                .background(Circle().fill(.black.opacity(0.32)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isMuted ? "Sesi aç" : "Sesi kapat")
+    }
+}

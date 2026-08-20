@@ -7,6 +7,7 @@ struct GameView: View {
 
     @StateObject private var state = GameState()
     @State private var scene: GameScene?
+    @State private var isMuted = SoundEngine.shared.isMuted
 
     var body: some View {
         GeometryReader { proxy in
@@ -20,8 +21,19 @@ struct GameView: View {
 
                 overlay
                     .animation(.easeInOut(duration: 0.22), value: phaseKey)
+
+                // Ses düğmesi sadece menüde; oyun sırasında ekranı meşgul etmesin.
+                if state.phase == .menu {
+                    SoundToggle(isMuted: $isMuted)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 18)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                }
             }
-            .onAppear { makeSceneIfNeeded(size: proxy.size) }
+            .onAppear {
+                makeSceneIfNeeded(size: proxy.size)
+                SoundEngine.shared.start()
+            }
         }
         .statusBarHidden()
     }
@@ -94,31 +106,37 @@ struct GameView: View {
         scene = newScene
     }
 
-    private func prepare(level index: Int) {
+    /// Her düğmede aynı geri bildirim: kısa titreşim + tık sesi.
+    private func tapFeedback() {
         Haptics.tap()
+        SoundEngine.shared.play(.button)
+    }
+
+    private func prepare(level index: Int) {
+        tapFeedback()
         state.prepareLevel(index)
         scene?.prepare(level: index)
     }
 
     private func startLevel() {
-        Haptics.tap()
+        tapFeedback()
         scene?.startLevel(state.levelIndex)
     }
 
     private func nextLevel() {
-        Haptics.tap()
+        tapFeedback()
         state.advanceToNextLevel()
         scene?.prepare(level: state.levelIndex)
     }
 
     private func restartJourney() {
-        Haptics.tap()
+        tapFeedback()
         state.restartJourney()
         scene?.prepare(level: state.levelIndex)
     }
 
     private func backToMenu() {
-        Haptics.tap()
+        tapFeedback()
         state.returnToMenu()
         scene?.showMenu()
     }
