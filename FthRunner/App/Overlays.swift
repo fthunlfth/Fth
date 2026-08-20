@@ -196,7 +196,7 @@ struct LevelIntroOverlay: View {
             }
 
             if showControls {
-                Text("Ekrana dokun: zıpla.\nBasılı tut: daha yükseğe.\n\n10 deniz yıldızı = 1 can (en fazla \(Tuning.maxLives)).")
+                Text("Ekrana dokun: zıpla.\nBasılı tut: daha yükseğe.\n\n\(Tuning.starfishPerExtraLife) deniz yıldızı = 1 can (en fazla \(Tuning.maxLives)).")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.65))
                     .multilineTextAlignment(.center)

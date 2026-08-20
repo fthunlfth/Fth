@@ -48,7 +48,7 @@ enum Tuning {
     /// Can göstergesindeki kalp sayısı ve tavan.
     static let maxLives = 3
     /// Kaç deniz yıldızı bir can ediyor.
-    static let starfishPerExtraLife = 10
+    static let starfishPerExtraLife = 15
     /// Yedikten sonra dokunulmazlık süresi.
     static let invulnerabilityTime: TimeInterval = 1.5
 

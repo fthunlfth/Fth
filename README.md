@@ -39,8 +39,8 @@ tampon var — yani zamanlaman biraz şaşarsa oyun seni affediyor.
 **İki canla başlarsın.** Çarptığında bir can gider ve kısa süre dokunulmaz
 olursun; canlar bitince bölümün başına dönersin.
 
-**10 deniz yıldızı bir can ediyor**, en fazla üç cana kadar. Göstergedeki
-`★ 7/10` sıradaki cana ne kaldığını söylüyor. Canlar tavandayken sayaç yine
+**15 deniz yıldızı bir can ediyor**, en fazla üç cana kadar. Göstergedeki
+`★ 7/15` sıradaki cana ne kaldığını söylüyor. Canlar tavandayken sayaç yine
 sıfırlanır — yıldızlar zaten tanesi +5 puan.
 
 ## Bölümler
@@ -166,7 +166,7 @@ değiştirdiğinde sonuç birebir öngörülebilir oluyor.
 - **Bölüm zor/kolay** → `Level.all` içindeki `scrollSpeed` ve `gapRange`
 - **Engeller çok sık** → `gapRange` aralığını genişlet
 - **Çok çabuk ölüyorum** → `Tuning.startingLives` (şu an 2), `invulnerabilityTime`
-- **Can kazanmak çok kolay/zor** → `Tuning.starfishPerExtraLife` (şu an 10),
+- **Can kazanmak çok kolay/zor** → `Tuning.starfishPerExtraLife` (şu an 15),
   tavan için `Tuning.maxLives` (şu an 3)
 - **Deniz çok/az dalgalı** → `waveAmplitude`, `waveLength`
 - **Ses çok/az** → `SoundEngine.applyVolumes` içindeki iki değer
