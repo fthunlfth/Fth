@@ -203,14 +203,10 @@ circle(cx - r * 1.02, cy + r * 0.10, r * 0.17, C["skin"])
 circle(cx + r * 1.02, cy + r * 0.10, r * 0.17, C["skin"])
 circle(cx, cy, r, C["skin"])
 
-# Kâkül: önce yüzü tam kapatan saç kepi, sonra yana savrulan kesim çizgisi.
-# Kepin yarıçapı yüzden büyük tutuluyor ki kenarlarda ten rengi hilal sızmasın.
-cap_r = r * 1.06
-bangs = [(cx + cap_r * math.cos(math.radians(a)), cy + cap_r * math.sin(math.radians(a)))
-         for a in range(184, 357, 3)]
-bangs += quad_pts((cx + cap_r * math.cos(math.radians(356)), cy + cap_r * math.sin(math.radians(356))),
-                  (cx - r * 0.20, cy + r * 0.30),
-                  (cx - cap_r * math.cos(math.radians(4)), cy + cap_r * math.sin(math.radians(184))))
+# Kâkül: yana savrulan perçem. HiraNode.swift ve önizleme sayfasındaki
+# çizimle birebir aynı eğri — üç yerde aynı yüz çıksın diye.
+bangs = quad_pts((cx - r * 1.03, cy - r * 0.06), (cx, cy - r * 1.62), (cx + r * 1.00, cy - r * 0.50))
+bangs += quad_pts((cx + r * 1.00, cy - r * 0.50), (cx - r * 0.10, cy + r * 0.06), (cx - r * 1.03, cy - r * 0.06))
 fill_polygon(bangs, C["hair"])
 ellipse(cx - r * 0.30, cy - r * 0.72, r * 0.31, r * 0.10, C["hairShine"], rot=-0.22)
 
