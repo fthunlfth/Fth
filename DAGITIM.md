@@ -1,5 +1,9 @@
 # Oyunu başkasına nasıl gönderirim
 
+> Bu dosya kısa teknik özet. Hiç program yazmamış biri için adım adım,
+> "hangi düğmeye basacağım" seviyesinde bir rehber ayrıca hazırlandı —
+> Xcode kurulumundan App Store yayınına kadar dokuz adım.
+
 Üç gerçekçi yol var. Hangisinin sana uyduğu, karşı tarafın kim olduğuna ve
 99 dolarlık Apple geliştirici üyeliğini alıp almadığına bağlı.
 
