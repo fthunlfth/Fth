@@ -1,76 +1,60 @@
 import SpriteKit
 
-/// Denizanası. Yavaş ama sağa sola salınıyor, bu yüzden yerini kestirmek zor.
+/// Yüzeyde süzülen denizanası. Kubbesi suyun üstünde, dokungaçları altında.
 final class JellyfishNode: ObstacleNode {
 
-    private let radius = Tuning.jellyfishRadius
-    private var originX: CGFloat = 0
-    private var phase: CGFloat = 0
+    private let radius: CGFloat = 26
+
+    override var verticalOffset: CGFloat { radius * 0.55 }
 
     override var localCollisionShapes: [CollisionShape] {
-        // Şemsiye kısmı ve altındaki dokungaçlar iki ayrı alan.
-        [
-            .circle(center: .zero, radius: radius * 0.85),
-            .rect(CGRect(x: -radius * 0.5, y: -radius * 2.1, width: radius, height: radius * 1.6))
-        ]
+        [.circle(center: CGPoint(x: 0, y: radius * 0.1), radius: radius * 0.82)]
     }
 
-    func build(originX: CGFloat) {
-        self.originX = originX
-        self.phase = .random(in: 0...(.pi * 2))
+    func build() {
         visual.removeAllChildren()
 
-        // Işıldayan hale.
-        let glow = SKSpriteNode(texture: TextureFactory.softCircle(
-            diameter: radius * 5, color: Palette.jellyfish))
-        glow.size = CGSize(width: radius * 5, height: radius * 5)
+        let glowDiameter = radius * 5
+        let glow = SKSpriteNode(texture: TextureFactory.softCircle(diameter: glowDiameter, color: Palette.jellyfish))
+        glow.size = CGSize(width: glowDiameter, height: glowDiameter)
         glow.alpha = 0.35
         glow.blendMode = .add
         visual.addChild(glow)
 
-        // Kubbe
-        let dome = CGMutablePath()
-        dome.addArc(center: .zero, radius: radius, startAngle: 0, endAngle: .pi, clockwise: false)
-        dome.addQuadCurve(to: CGPoint(x: radius, y: 0), control: CGPoint(x: 0, y: -radius * 0.55))
-        dome.closeSubpath()
-        let domeNode = SKShapeNode(path: dome)
-        domeNode.fillColor = Palette.jellyfish
-        domeNode.strokeColor = .white
-        domeNode.lineWidth = 1.5
-        domeNode.alpha = 0.9
-        visual.addChild(domeNode)
-
-        // Dokungaçlar
         for index in 0..<5 {
-            let x = (CGFloat(index) - 2) * radius * 0.34
-            let tentacle = SKShapeNode(rectOf: CGSize(width: 2.5, height: radius * 1.7), cornerRadius: 1.25)
+            let x = (CGFloat(index) - 2) * radius * 0.32
+            let tentacle = SKShapeNode(rectOf: CGSize(width: 3, height: radius * 1.5), cornerRadius: 1.5)
             tentacle.fillColor = Palette.jellyfish
             tentacle.strokeColor = .clear
-            tentacle.alpha = 0.85
-            tentacle.position = CGPoint(x: x, y: -radius * 1.0)
+            tentacle.alpha = 0.8
+            tentacle.position = CGPoint(x: x, y: -radius * 0.75)
             visual.addChild(tentacle)
 
-            // Her dokungaç farklı fazda dalgalansın.
             let sway = SKAction.sequence([
-                .rotate(toAngle: 0.22, duration: 0.7 + Double(index) * 0.09),
-                .rotate(toAngle: -0.22, duration: 0.7 + Double(index) * 0.09)
+                .rotate(toAngle: 0.2, duration: 0.6 + Double(index) * 0.08),
+                .rotate(toAngle: -0.2, duration: 0.6 + Double(index) * 0.08)
             ])
             sway.timingMode = .easeInEaseOut
             tentacle.run(.repeatForever(sway))
         }
 
-        // Kubbenin nabız gibi büzülüp açılması.
+        // Kubbe.
+        let dome = CGMutablePath()
+        dome.addArc(center: .zero, radius: radius, startAngle: 0, endAngle: .pi, clockwise: false)
+        dome.addQuadCurve(to: CGPoint(x: radius, y: 0), control: CGPoint(x: 0, y: -radius * 0.5))
+        dome.closeSubpath()
+        let domeNode = SKShapeNode(path: dome)
+        domeNode.fillColor = Palette.jellyfish
+        domeNode.strokeColor = .white
+        domeNode.lineWidth = 1.5
+        domeNode.alpha = 0.92
+        visual.addChild(domeNode)
+
         let pulse = SKAction.sequence([
-            .scaleX(to: 1.12, y: 0.9, duration: 0.8),
-            .scaleX(to: 0.94, y: 1.08, duration: 0.8)
+            .scaleX(to: 1.1, y: 0.9, duration: 0.75),
+            .scaleX(to: 0.95, y: 1.08, duration: 0.75)
         ])
         pulse.timingMode = .easeInEaseOut
         domeNode.run(.repeatForever(pulse))
-    }
-
-    override func advance(deltaTime: TimeInterval, sceneSize: CGSize) {
-        phase += CGFloat(deltaTime) * Tuning.jellyfishSwaySpeed
-        let target = originX + sin(phase) * Tuning.jellyfishSwayAmplitude
-        position.x = min(max(target, radius), sceneSize.width - radius)
     }
 }

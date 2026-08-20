@@ -1,234 +1,312 @@
 import SpriteKit
 
-/// Oyuncunun kayığı ve içindeki kız: kahverengi kâkküllü saç,
-/// turuncu can yeleği ve kucağında küçük gri ayıcık.
-/// Bütün çizim kod ile yapılıyor; hiçbir görsel dosyaya bağlı değil.
+/// Kayık, içindeki kız ve kucağındaki ayıcık — yandan görünüş, sağa bakar.
+/// Bölüm sonlarında katılan hayvanlar kıç tarafına diziliyor ve
+/// kalabalıklaştıkça kayık uzuyor.
 final class BoatNode: SKNode {
 
-    let collisionRadius: CGFloat
-    private let width: CGFloat
-    private var length: CGFloat { width * 1.36 }
+    /// Kayığa katılmış hayvanlar (bölüm sırasına göre).
+    private(set) var companions: [AnimalKind] = []
 
-    /// Yatırma ve girdap dönüşü buraya uygulanıyor ki çarpışma dairesi sabit kalsın.
+    private let baseLength: CGFloat
+    private let height: CGFloat
+
+    /// Yatırma ve zıplama açısı buraya uygulanıyor; çarpışma kutusu etkilenmiyor.
     private let visual = SKNode()
-    /// Dalgadaki sürekli yalpalama burada döner; `visual` ile çakışmasın diye ayrı.
-    private let rocker = SKNode()
+    private let hullLayer = SKNode()
+    private let crewLayer = SKNode()
     private let girl = SKNode()
     private var wake: SKEmitterNode?
-    private var bankAngle: CGFloat = 0
-    private var spinAngle: CGFloat = 0
+    private var pitch: CGFloat = 0
 
-    init(width: CGFloat, collisionRadius: CGFloat) {
-        self.width = width
-        self.collisionRadius = collisionRadius
+    /// Mürettebat büyüdükçe kayık uzuyor.
+    var length: CGFloat { baseLength + CGFloat(companions.count) * 15 }
+
+    /// Çarpışma kutusu — kayığın orijinine göre.
+    var collisionRect: CGRect {
+        let inset = Tuning.boatCollisionInset
+        return CGRect(x: -length / 2 + inset,
+                      y: -height * 0.45 + inset * 0.5,
+                      width: length - inset * 2,
+                      height: height * 1.15 - inset)
+    }
+
+    init(length: CGFloat, height: CGFloat) {
+        self.baseLength = length
+        self.height = height
         super.init()
 
         addChild(visual)
-        visual.addChild(rocker)
+        visual.addChild(hullLayer)
+        visual.addChild(crewLayer)
+        visual.addChild(girl)
         buildWake()
-        buildHull()
+        rebuildHull()
         buildGirl()
-        rocker.addChild(girl)
-        startIdleMotion()
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) kullanılmıyor") }
 
-    // MARK: - Kayık gövdesi
+    // MARK: - Tekne gövdesi
 
-    /// Pruvası sivri, kıçı yuvarlak ahşap tekne silueti.
-    private func hullPath(scale: CGFloat) -> CGPath {
-        let halfW = width / 2 * scale
-        let halfL = length / 2 * scale
+    private func hullPath() -> CGPath {
+        let halfL = length / 2
+        let deckBack = height * 0.30
+        let deckFront = height * 0.52
+
         let path = CGMutablePath()
-        path.move(to: CGPoint(x: 0, y: halfL))
-        path.addCurve(to: CGPoint(x: halfW, y: -halfL * 0.35),
-                      control1: CGPoint(x: halfW * 0.75, y: halfL * 0.60),
-                      control2: CGPoint(x: halfW, y: halfL * 0.05))
-        path.addQuadCurve(to: CGPoint(x: -halfW, y: -halfL * 0.35),
-                          control: CGPoint(x: 0, y: -halfL * 1.30))
-        path.addCurve(to: CGPoint(x: 0, y: halfL),
-                      control1: CGPoint(x: -halfW, y: halfL * 0.05),
-                      control2: CGPoint(x: -halfW * 0.75, y: halfL * 0.60))
+        path.move(to: CGPoint(x: -halfL, y: deckBack))
+        path.addQuadCurve(to: CGPoint(x: halfL, y: deckFront),
+                          control: CGPoint(x: 0, y: height * 0.36))
+        path.addQuadCurve(to: CGPoint(x: -halfL, y: deckBack),
+                          control: CGPoint(x: 0, y: -height * 1.20))
         path.closeSubpath()
         return path
     }
 
-    private func buildHull() {
-        let outer = SKShapeNode(path: hullPath(scale: 1))
-        outer.fillColor = Palette.hull
-        outer.strokeColor = Palette.hullDark
-        outer.lineWidth = 2
-        outer.lineJoin = .round
-        rocker.addChild(outer)
+    private func rebuildHull() {
+        hullLayer.removeAllChildren()
+        let halfL = length / 2
 
-        // İç boşluk — tekneye derinlik veriyor.
-        let inner = SKShapeNode(path: hullPath(scale: 0.72))
-        inner.fillColor = Palette.hullLight
-        inner.strokeColor = Palette.hullDark
-        inner.lineWidth = 1
-        inner.position = CGPoint(x: 0, y: -length * 0.02)
-        rocker.addChild(inner)
+        let hull = SKShapeNode(path: hullPath())
+        hull.fillColor = Palette.hull
+        hull.strokeColor = Palette.hullDark
+        hull.lineWidth = 2.5
+        hull.lineJoin = .round
+        hullLayer.addChild(hull)
 
-        // Oturma tahtaları.
-        for offset in [length * 0.16, -length * 0.20] {
-            let plank = SKShapeNode(rectOf: CGSize(width: width * 0.62, height: 4), cornerRadius: 2)
-            plank.fillColor = Palette.hull
-            plank.strokeColor = Palette.hullDark
-            plank.lineWidth = 0.5
-            plank.position = CGPoint(x: 0, y: offset)
-            rocker.addChild(plank)
+        // Küpeşte — güverte çizgisi boyunca açık renk bant.
+        let rail = CGMutablePath()
+        rail.move(to: CGPoint(x: -halfL + 2, y: height * 0.30))
+        rail.addQuadCurve(to: CGPoint(x: halfL - 2, y: height * 0.52),
+                          control: CGPoint(x: 0, y: height * 0.36))
+        let railNode = SKShapeNode(path: rail)
+        railNode.strokeColor = Palette.hullLight
+        railNode.lineWidth = 4
+        railNode.lineCap = .round
+        hullLayer.addChild(railNode)
+
+        // Kaplama tahtaları.
+        for ratio in stride(from: CGFloat(-0.32), through: 0.32, by: 0.16) {
+            let plank = SKShapeNode(rectOf: CGSize(width: 1.5, height: height * 0.5), cornerRadius: 0.75)
+            plank.fillColor = Palette.hullDark
+            plank.strokeColor = .clear
+            plank.alpha = 0.35
+            plank.position = CGPoint(x: length * ratio, y: -height * 0.02)
+            hullLayer.addChild(plank)
         }
+
+        // Pruvadaki küçük bayrak — kayığın yönünü belli ediyor.
+        let pole = SKShapeNode(rectOf: CGSize(width: 2, height: height * 0.85), cornerRadius: 1)
+        pole.fillColor = Palette.hullDark
+        pole.strokeColor = .clear
+        pole.position = CGPoint(x: halfL - height * 0.22, y: height * 0.92)
+        hullLayer.addChild(pole)
+
+        let flag = CGMutablePath()
+        flag.move(to: CGPoint(x: 0, y: 0))
+        flag.addLine(to: CGPoint(x: -height * 0.34, y: height * 0.10))
+        flag.addLine(to: CGPoint(x: -height * 0.34, y: -height * 0.14))
+        flag.closeSubpath()
+        let flagNode = SKShapeNode(path: flag)
+        flagNode.fillColor = Palette.dress
+        flagNode.strokeColor = Palette.hullDark
+        flagNode.lineWidth = 1
+        flagNode.position = CGPoint(x: halfL - height * 0.21, y: height * 1.28)
+        hullLayer.addChild(flagNode)
+        flagNode.run(.repeatForever(.sequence([
+            .scaleX(to: 0.82, duration: 0.5),
+            .scaleX(to: 1.0, duration: 0.5)
+        ])))
     }
 
     // MARK: - Kız ve ayıcık
 
     private func buildGirl() {
-        let headRadius = width * 0.185
-        let headY = width * 0.10
+        girl.removeAllChildren()
+        let r = height * 0.30                       // kafa yarıçapı
+        let seatY = height * 0.34
+        let bodyX = -height * 0.05
+        girl.position = CGPoint(x: length * 0.06, y: 0)
 
-        buildBodyAndArms(headRadius: headRadius, headY: headY)
-        buildTeddy(headRadius: headRadius, headY: headY)
-        buildHeadAndHair(headRadius: headRadius, headY: headY)
-    }
+        // Gövde ve can yeleği.
+        let torso = SKShapeNode(ellipseOf: CGSize(width: r * 1.5, height: r * 1.7))
+        torso.fillColor = Palette.dress
+        torso.strokeColor = Palette.hullDark
+        torso.lineWidth = 1
+        torso.position = CGPoint(x: bodyX, y: seatY + r * 0.55)
+        girl.addChild(torso)
 
-    private func buildBodyAndArms(headRadius r: CGFloat, headY: CGFloat) {
-        // Elbise
-        let dress = SKShapeNode(ellipseOf: CGSize(width: r * 2.3, height: r * 1.9))
-        dress.fillColor = Palette.dress
-        dress.strokeColor = Palette.hullDark
-        dress.lineWidth = 1
-        dress.position = CGPoint(x: 0, y: headY - r * 1.35)
-        girl.addChild(dress)
-
-        // Can yeleği — hem renk katıyor hem denizde mantıklı duruyor.
-        let vest = SKShapeNode(rectOf: CGSize(width: r * 1.9, height: r * 1.15), cornerRadius: r * 0.35)
+        let vest = SKShapeNode(rectOf: CGSize(width: r * 1.35, height: r * 1.05), cornerRadius: r * 0.3)
         vest.fillColor = Palette.lifeVest
         vest.strokeColor = Palette.hullDark
         vest.lineWidth = 1
-        vest.position = CGPoint(x: 0, y: headY - r * 1.25)
+        vest.position = CGPoint(x: bodyX, y: seatY + r * 0.55)
         girl.addChild(vest)
 
-        // Ayıcığı saran iki küçük kol.
-        for side in [CGFloat(-1), 1] {
-            let arm = SKShapeNode(ellipseOf: CGSize(width: r * 0.52, height: r * 1.05))
-            arm.fillColor = Palette.skin
-            arm.strokeColor = Palette.hullDark
-            arm.lineWidth = 0.8
-            arm.position = CGPoint(x: side * r * 1.05, y: headY - r * 1.45)
-            arm.zRotation = side * -0.45
-            girl.addChild(arm)
-        }
+        // Öne uzanan kol — ayıcığı tutuyor.
+        let arm = SKShapeNode(ellipseOf: CGSize(width: r * 0.85, height: r * 0.36))
+        arm.fillColor = Palette.skin
+        arm.strokeColor = Palette.hullDark
+        arm.lineWidth = 0.8
+        arm.position = CGPoint(x: bodyX + r * 0.72, y: seatY + r * 0.42)
+        arm.zRotation = -0.18
+        arm.zPosition = 3
+        girl.addChild(arm)
+
+        buildTeddy(at: CGPoint(x: bodyX + r * 1.05, y: seatY + r * 0.50), scale: r)
+        buildHead(at: CGPoint(x: bodyX + r * 0.10, y: seatY + r * 1.85), radius: r)
     }
 
-    private func buildTeddy(headRadius r: CGFloat, headY: CGFloat) {
+    private func buildTeddy(at point: CGPoint, scale r: CGFloat) {
         let teddy = SKNode()
-        teddy.position = CGPoint(x: 0, y: headY - r * 1.75)
-        teddy.zPosition = 1
+        teddy.position = point
+        teddy.zPosition = 2
 
-        let bodyRadius = r * 0.46
-        let headRadiusTeddy = r * 0.34
+        let bodyRadius = r * 0.34
+        let headRadius = r * 0.26
 
-        let bodyShape = SKShapeNode(circleOfRadius: bodyRadius)
-        bodyShape.fillColor = Palette.teddy
-        bodyShape.strokeColor = Palette.teddyDark
-        bodyShape.lineWidth = 0.8
-        teddy.addChild(bodyShape)
+        let body = SKShapeNode(circleOfRadius: bodyRadius)
+        body.fillColor = Palette.teddy
+        body.strokeColor = Palette.teddyDark
+        body.lineWidth = 0.8
+        teddy.addChild(body)
 
-        let headShape = SKShapeNode(circleOfRadius: headRadiusTeddy)
-        headShape.fillColor = Palette.teddy
-        headShape.strokeColor = Palette.teddyDark
-        headShape.lineWidth = 0.8
-        headShape.position = CGPoint(x: 0, y: bodyRadius * 0.95)
-        teddy.addChild(headShape)
+        // Yandan tek kulak görünüyor.
+        let ear = SKShapeNode(circleOfRadius: headRadius * 0.45)
+        ear.fillColor = Palette.teddy
+        ear.strokeColor = Palette.teddyDark
+        ear.lineWidth = 0.6
+        ear.position = CGPoint(x: -headRadius * 0.35, y: bodyRadius * 0.85 + headRadius * 0.7)
+        teddy.addChild(ear)
 
-        for side in [CGFloat(-1), 1] {
-            let ear = SKShapeNode(circleOfRadius: headRadiusTeddy * 0.42)
-            ear.fillColor = Palette.teddy
-            ear.strokeColor = Palette.teddyDark
-            ear.lineWidth = 0.6
-            ear.position = CGPoint(x: side * headRadiusTeddy * 0.75,
-                                   y: bodyRadius * 0.95 + headRadiusTeddy * 0.72)
-            teddy.addChild(ear)
-        }
+        let head = SKShapeNode(circleOfRadius: headRadius)
+        head.fillColor = Palette.teddy
+        head.strokeColor = Palette.teddyDark
+        head.lineWidth = 0.8
+        head.position = CGPoint(x: 0, y: bodyRadius * 0.85)
+        teddy.addChild(head)
 
-        // Burun
-        let muzzle = SKShapeNode(circleOfRadius: headRadiusTeddy * 0.22)
+        let muzzle = SKShapeNode(circleOfRadius: headRadius * 0.24)
         muzzle.fillColor = Palette.teddyDark
         muzzle.strokeColor = .clear
-        muzzle.position = CGPoint(x: 0, y: bodyRadius * 0.95 - headRadiusTeddy * 0.25)
+        muzzle.position = CGPoint(x: headRadius * 0.6, y: bodyRadius * 0.85 - headRadius * 0.1)
         teddy.addChild(muzzle)
 
         girl.addChild(teddy)
     }
 
-    private func buildHeadAndHair(headRadius r: CGFloat, headY: CGFloat) {
+    private func buildHead(at point: CGPoint, radius r: CGFloat) {
         let head = SKNode()
-        head.position = CGPoint(x: 0, y: headY)
-        head.zPosition = 2
+        head.position = point
+        head.zPosition = 4
 
-        // Arkadaki saç kütlesi — omuz hizasına inen bob kesim.
-        let hairBack = SKShapeNode(ellipseOf: CGSize(width: r * 2.5, height: r * 2.5))
-        hairBack.fillColor = Palette.hair
-        hairBack.strokeColor = .clear
-        hairBack.position = CGPoint(x: 0, y: -r * 0.18)
-        head.addChild(hairBack)
+        // Arkaya dökülen saç.
+        let backHair = SKShapeNode(ellipseOf: CGSize(width: r * 1.85, height: r * 2.3))
+        backHair.fillColor = Palette.hair
+        backHair.strokeColor = .clear
+        backHair.position = CGPoint(x: -r * 0.28, y: -r * 0.42)
+        head.addChild(backHair)
 
-        for side in [CGFloat(-1), 1] {
-            let strand = SKShapeNode(ellipseOf: CGSize(width: r * 0.85, height: r * 1.7))
-            strand.fillColor = Palette.hair
-            strand.strokeColor = .clear
-            strand.position = CGPoint(x: side * r * 0.92, y: -r * 0.75)
-            head.addChild(strand)
-        }
-
-        // Yüz
-        let face = SKShapeNode(circleOfRadius: r * 0.98)
+        // Yüz.
+        let face = SKShapeNode(circleOfRadius: r)
         face.fillColor = Palette.skin
         face.strokeColor = .clear
         head.addChild(face)
 
-        // Kâkül: alnı kapatan, ortası hafif inen bir perçem.
+        // Kâkül: alnın üstünü kaplayıp öne doğru inen perçem.
         let bangs = CGMutablePath()
-        bangs.move(to: CGPoint(x: -r * 0.99, y: r * 0.12))
-        bangs.addQuadCurve(to: CGPoint(x: r * 0.99, y: r * 0.12),
-                           control: CGPoint(x: 0, y: r * 1.75))
-        bangs.addQuadCurve(to: CGPoint(x: -r * 0.99, y: r * 0.12),
-                           control: CGPoint(x: 0, y: -r * 0.10))
+        bangs.move(to: CGPoint(x: -r * 1.02, y: r * 0.05))
+        bangs.addQuadCurve(to: CGPoint(x: r * 0.92, y: r * 0.30),
+                           control: CGPoint(x: -r * 0.10, y: r * 1.65))
+        bangs.addQuadCurve(to: CGPoint(x: -r * 1.02, y: r * 0.05),
+                           control: CGPoint(x: -r * 0.15, y: r * 0.22))
         bangs.closeSubpath()
         let bangsNode = SKShapeNode(path: bangs)
         bangsNode.fillColor = Palette.hair
         bangsNode.strokeColor = .clear
         head.addChild(bangsNode)
 
-        // Saç parlaması
-        let shine = SKShapeNode(ellipseOf: CGSize(width: r * 0.7, height: r * 0.28))
+        let shine = SKShapeNode(ellipseOf: CGSize(width: r * 0.55, height: r * 0.2))
         shine.fillColor = Palette.hairShine
         shine.strokeColor = .clear
-        shine.position = CGPoint(x: -r * 0.3, y: r * 0.75)
-        shine.zRotation = 0.25
+        shine.position = CGPoint(x: -r * 0.30, y: r * 0.78)
+        shine.zRotation = 0.2
         head.addChild(shine)
 
-        // Gözler ve ağız
-        for side in [CGFloat(-1), 1] {
-            let eye = SKShapeNode(circleOfRadius: r * 0.13)
-            eye.fillColor = Palette.hullDark
-            eye.strokeColor = .clear
-            eye.position = CGPoint(x: side * r * 0.36, y: -r * 0.12)
-            head.addChild(eye)
-        }
+        // Yandan tek göz.
+        let eye = SKShapeNode(circleOfRadius: r * 0.11)
+        eye.fillColor = Palette.hullDark
+        eye.strokeColor = .clear
+        eye.position = CGPoint(x: r * 0.42, y: -r * 0.02)
+        head.addChild(eye)
+
+        // Yanak ve gülümseme.
+        let cheek = SKShapeNode(ellipseOf: CGSize(width: r * 0.3, height: r * 0.18))
+        cheek.fillColor = Palette.skinShade
+        cheek.strokeColor = .clear
+        cheek.alpha = 0.7
+        cheek.position = CGPoint(x: r * 0.30, y: -r * 0.32)
+        head.addChild(cheek)
 
         let smile = CGMutablePath()
-        smile.move(to: CGPoint(x: -r * 0.28, y: -r * 0.28))
-        smile.addQuadCurve(to: CGPoint(x: r * 0.28, y: -r * 0.28),
-                           control: CGPoint(x: 0, y: -r * 0.56))
+        smile.move(to: CGPoint(x: r * 0.52, y: -r * 0.40))
+        smile.addQuadCurve(to: CGPoint(x: r * 0.82, y: -r * 0.34),
+                           control: CGPoint(x: r * 0.70, y: -r * 0.52))
         let smileNode = SKShapeNode(path: smile)
         smileNode.strokeColor = Palette.hullDark
-        smileNode.lineWidth = r * 0.12
+        smileNode.lineWidth = r * 0.09
         smileNode.lineCap = .round
         head.addChild(smileNode)
 
         girl.addChild(head)
+    }
+
+    // MARK: - Mürettebat
+
+    /// Kayıktaki hayvanları baştan kurar (kayıtlı ilerlemeyi geri yüklerken).
+    func setCompanions(_ kinds: [AnimalKind]) {
+        companions = kinds
+        rebuildHull()
+        buildGirl()
+        layOutCompanions(animatingLast: false)
+    }
+
+    /// Bölüm sonunda yeni bir hayvan kayığa atlar.
+    func addCompanion(_ kind: AnimalKind) {
+        guard !companions.contains(kind) else { return }
+        companions.append(kind)
+        rebuildHull()
+        buildGirl()
+        layOutCompanions(animatingLast: true)
+    }
+
+    private func layOutCompanions(animatingLast: Bool) {
+        crewLayer.removeAllChildren()
+        guard !companions.isEmpty else { return }
+
+        let animalHeight = height * 0.62
+        let seatY = height * 0.30
+        // Kızın arkasından kıça doğru diziliyorlar.
+        let frontX = -height * 0.10
+        let spacing = animalHeight * 0.78
+
+        for (offset, kind) in companions.enumerated() {
+            let node = AnimalNode(kind: kind, height: animalHeight)
+            node.position = CGPoint(x: frontX - CGFloat(offset) * spacing, y: seatY)
+            node.zPosition = CGFloat(3 - offset)
+            crewLayer.addChild(node)
+
+            if animatingLast && offset == companions.count - 1 {
+                // Yukarıdan atlayıp yerine oturuyor.
+                node.setScale(0.2)
+                node.position.y += height * 2.2
+                node.run(.group([
+                    .move(to: CGPoint(x: node.position.x, y: seatY), duration: 0.45),
+                    .scale(to: 1, duration: 0.45)
+                ]))
+            }
+        }
     }
 
     // MARK: - Su izi
@@ -236,115 +314,101 @@ final class BoatNode: SKNode {
     private func buildWake() {
         let emitter = SKEmitterNode()
         emitter.particleTexture = TextureFactory.softCircle(diameter: 28, color: Palette.foam)
-        emitter.particleBirthRate = 90
-        emitter.particleLifetime = 0.8
-        emitter.particleLifetimeRange = 0.35
-        emitter.particleSize = CGSize(width: width * 0.42, height: width * 0.42)
-        emitter.particleScaleSpeed = -0.55
-        emitter.particleAlpha = 0.55
-        emitter.particleAlphaSpeed = -0.7
+        emitter.particleBirthRate = 70
+        emitter.particleLifetime = 0.9
+        emitter.particleLifetimeRange = 0.4
+        emitter.particleSize = CGSize(width: height * 0.5, height: height * 0.5)
+        emitter.particleScaleSpeed = -0.45
+        emitter.particleAlpha = 0.6
+        emitter.particleAlphaSpeed = -0.65
         emitter.particleColor = Palette.foam
         emitter.particleColorBlendFactor = 1
-        emitter.particlePositionRange = CGVector(dx: width * 0.55, dy: 3)
-        emitter.emissionAngle = -.pi / 2
-        emitter.emissionAngleRange = 0.7
-        emitter.particleSpeed = 70
-        emitter.particleSpeedRange = 35
-        emitter.position = CGPoint(x: 0, y: -length * 0.45)
+        emitter.particlePositionRange = CGVector(dx: height * 0.3, dy: 3)
+        emitter.emissionAngle = .pi
+        emitter.emissionAngleRange = 0.8
+        emitter.particleSpeed = 60
+        emitter.particleSpeedRange = 30
+        emitter.position = CGPoint(x: -baseLength * 0.48, y: 0)
         emitter.zPosition = -1
         addChild(emitter)
         wake = emitter
     }
 
-    /// Köpük kayıkla birlikte taşınmasın diye dünya katmanına bağlanır.
-    func setWakeTarget(_ node: SKNode) {
-        wake?.targetNode = node
-    }
+    func setWakeTarget(_ node: SKNode) { wake?.targetNode = node }
+
+    func setWakeActive(_ active: Bool) { wake?.particleBirthRate = active ? 70 : 0 }
 
     // MARK: - Hareket
 
-    private func startIdleMotion() {
-        // Dalgada hafif yalpalama.
-        let rock = SKAction.sequence([
-            .rotate(byAngle: 0.05, duration: 1.1),
-            .rotate(byAngle: -0.10, duration: 2.2),
-            .rotate(byAngle: 0.05, duration: 1.1)
+    /// Zıplarken burun kalkar, inerken düşer; suda dalganın eğimine oturur.
+    func setPitch(_ angle: CGFloat) {
+        pitch = angle
+        visual.zRotation = angle
+    }
+
+    /// Suya iniş: kısa bir çömelme ve sıçrama.
+    func landingSquash() {
+        visual.removeAction(forKey: "squash")
+        visual.run(.sequence([
+            .scaleX(to: 1.10, y: 0.85, duration: 0.07),
+            .scaleX(to: 1.0, y: 1.0, duration: 0.16)
+        ]), withKey: "squash")
+    }
+
+    /// Can kaybı: kırmızı yanıp sönme.
+    func flashHurt(duration: TimeInterval) {
+        visual.removeAction(forKey: "hurt")
+        let blink = SKAction.sequence([
+            .fadeAlpha(to: 0.35, duration: 0.1),
+            .fadeAlpha(to: 1.0, duration: 0.1)
         ])
-        rock.timingMode = .easeInEaseOut
-        girl.run(.repeatForever(.sequence([
-            .moveBy(x: 0, y: 1.5, duration: 1.0),
-            .moveBy(x: 0, y: -1.5, duration: 1.0)
-        ])))
-        rocker.run(.repeatForever(rock), withKey: "idleRock")
+        let count = max(1, Int(duration / 0.2))
+        visual.run(.sequence([.repeat(blink, count: count), .fadeAlpha(to: 1, duration: 0)]),
+                   withKey: "hurt")
     }
-
-    /// Yatay hıza göre kayığı yatırır — dönüş hissi verir.
-    func applyBank(horizontalVelocity: CGFloat) {
-        let maxAngle: CGFloat = 0.36
-        let target = max(-maxAngle, min(maxAngle, -horizontalVelocity / 1500))
-        bankAngle += (target - bankAngle) * 0.22
-        updateRotation()
-    }
-
-    /// Girdabın içindeyken kayık kendi ekseninde dönmeye başlar.
-    /// Açıyı sahne biriktiriyor, burada sadece uygulanıyor.
-    func setSpin(_ angle: CGFloat) {
-        spinAngle = angle
-        updateRotation()
-    }
-
-    private func updateRotation() {
-        visual.zRotation = bankAngle + spinAngle
-    }
-
-    func setWakeActive(_ active: Bool) {
-        wake?.particleBirthRate = active ? 90 : 0
-    }
-
-    // MARK: - Devrilme
 
     func capsize(in layer: SKNode) {
         setWakeActive(false)
-        rocker.removeAction(forKey: "idleRock")
+        visual.removeAllActions()
         visual.run(.group([
-            .rotate(byAngle: 2.6, duration: 0.8),
-            .scale(to: 0.55, duration: 0.8),
-            .fadeAlpha(to: 0.25, duration: 0.8)
+            .rotate(byAngle: -2.2, duration: 0.9),
+            .moveBy(x: -20, y: -height * 2.2, duration: 0.9),
+            .fadeAlpha(to: 0.2, duration: 0.9)
         ]))
+        splash(in: layer, strength: 1.4)
+    }
 
-        let splash = SKEmitterNode()
-        splash.particleTexture = TextureFactory.softCircle(diameter: 30, color: Palette.foam)
-        splash.numParticlesToEmit = 80
-        splash.particleBirthRate = 2500
-        splash.particleLifetime = 0.8
-        splash.particleLifetimeRange = 0.4
-        splash.particleSize = CGSize(width: width * 0.35, height: width * 0.35)
-        splash.particleScaleSpeed = -0.5
-        splash.particleAlphaSpeed = -1.1
-        splash.particleColor = Palette.foam
-        splash.particleColorBlendFactor = 1
-        splash.emissionAngleRange = .pi * 2
-        splash.particleSpeed = 260
-        splash.particleSpeedRange = 180
-        splash.position = position
-        splash.zPosition = 50
-        layer.addChild(splash)
-        splash.run(.sequence([.wait(forDuration: 1.6), .removeFromParent()]))
+    /// Suya çarpma köpüğü.
+    func splash(in layer: SKNode, strength: CGFloat = 1) {
+        let emitter = SKEmitterNode()
+        emitter.particleTexture = TextureFactory.softCircle(diameter: 26, color: Palette.foam)
+        emitter.numParticlesToEmit = Int(40 * strength)
+        emitter.particleBirthRate = 1800
+        emitter.particleLifetime = 0.6
+        emitter.particleLifetimeRange = 0.3
+        emitter.particleSize = CGSize(width: height * 0.35, height: height * 0.35)
+        emitter.particleScaleSpeed = -0.6
+        emitter.particleAlphaSpeed = -1.4
+        emitter.particleColor = Palette.foam
+        emitter.particleColorBlendFactor = 1
+        emitter.emissionAngle = .pi / 2
+        emitter.emissionAngleRange = .pi * 0.9
+        emitter.particleSpeed = 190 * strength
+        emitter.particleSpeedRange = 120
+        emitter.yAcceleration = -700
+        emitter.position = position
+        emitter.zPosition = 40
+        layer.addChild(emitter)
+        emitter.run(.sequence([.wait(forDuration: 1.4), .removeFromParent()]))
     }
 
     func reset(at point: CGPoint) {
         position = point
-        bankAngle = 0
-        spinAngle = 0
         visual.removeAllActions()
         visual.alpha = 1
         visual.setScale(1)
         visual.zRotation = 0
-        rocker.removeAllActions()
-        rocker.zRotation = 0
-        girl.removeAllActions()
-        girl.position = .zero
-        startIdleMotion()
+        pitch = 0
         setWakeActive(true)
     }
 }

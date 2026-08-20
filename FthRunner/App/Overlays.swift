@@ -3,132 +3,407 @@ import SwiftUI
 // MARK: - Oyun içi göstergeler
 
 struct HUDOverlay: View {
+    let level: Level
     let score: Int
     let starfish: Int
-    let best: Int
+    let lives: Int
+    let progress: Double
 
     var body: some View {
-        VStack {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(score)")
-                        .font(.system(size: 46, weight: .heavy, design: .rounded))
+        VStack(spacing: 10) {
+            HStack(alignment: .center) {
+                Text("\(score)")
+                    .font(.system(size: 34, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+                    .contentTransition(.numericText())
+                    .animation(.snappy(duration: 0.15), value: score)
+                    .shadow(color: .black.opacity(0.35), radius: 4, y: 1)
+
+                Spacer()
+
+                HStack(spacing: 5) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Palette.gold)
+                    Text("\(starfish)")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
-                        .contentTransition(.numericText())
-                        .animation(.snappy(duration: 0.15), value: score)
-                    Text("REKOR \(best)")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.45))
                 }
 
                 Spacer()
 
-                HStack(spacing: 6) {
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Palette.gold)
-                    Text("\(starfish)")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.9))
+                HStack(spacing: 4) {
+                    ForEach(0..<Tuning.livesPerLevel, id: \.self) { index in
+                        Image(systemName: index < lives ? "heart.fill" : "heart")
+                            .font(.system(size: 15))
+                            .foregroundStyle(index < lives ? Palette.life : .white.opacity(0.3))
+                    }
                 }
-                .padding(.top, 8)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 12)
 
-            Spacer()
+            ProgressTrack(level: level, progress: progress)
         }
+        .padding(.horizontal, 22)
+        .padding(.top, 8)
+        .frame(maxHeight: .infinity, alignment: .top)
         .allowsHitTesting(false)
     }
 }
 
-// MARK: - Açılış menüsü
+/// Bölümün ne kadarının geçildiğini gösteren şerit; sonunda ödül hayvanı bekliyor.
+struct ProgressTrack: View {
+    let level: Level
+    let progress: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Text("BÖLÜM \(level.number)")
+                    .font(.system(size: 10, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.9))
+                Text(level.title.uppercased())
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+            .tracking(0.8)
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(.black.opacity(0.28))
+                    Capsule()
+                        .fill(Palette.accent)
+                        .frame(width: max(4, proxy.size.width * progress))
+                    Circle()
+                        .fill(Color(level.reward.swatch))
+                        .frame(width: 9, height: 9)
+                        .overlay(Circle().stroke(.white.opacity(0.8), lineWidth: 1))
+                        .offset(x: proxy.size.width - 9)
+                }
+            }
+            .frame(height: 7)
+            .animation(.linear(duration: 0.25), value: progress)
+        }
+    }
+}
+
+// MARK: - Ana menü
 
 struct MenuOverlay: View {
     let best: Int
-    let onStart: () -> Void
+    let companions: [AnimalKind]
+    let resumeLevel: Int
+    let hasProgress: Bool
+    let onContinue: () -> Void
+    let onRestart: () -> Void
 
     var body: some View {
-        VStack(spacing: 28) {
-            Spacer()
-
-            VStack(spacing: 8) {
+        OverlayShell {
+            VStack(spacing: 10) {
                 Text("KAYIK")
-                    .font(.system(size: 62, weight: .black, design: .rounded))
+                    .font(.system(size: 60, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
-                    .shadow(color: Palette.accent.opacity(0.7), radius: 22)
-
-                Text("Parmağını sürükle, denizde yolunu bul.")
+                    .shadow(color: Palette.accent.opacity(0.8), radius: 20)
+                Text("Dokun ve zıpla. Beş bölüm, beş yeni arkadaş.")
                     .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
             }
 
             if best > 0 {
                 Text("REKOR  \(best)")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(Palette.gold)
+            }
+
+            CrewStrip(companions: companions, title: "MÜRETTEBAT")
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                PrimaryButton(title: hasProgress ? "DEVAM ET — BÖLÜM \(resumeLevel + 1)" : "BAŞLA",
+                              tint: Palette.accent,
+                              action: onContinue)
+                if hasProgress {
+                    SecondaryButton(title: "BAŞTAN BAŞLA", action: onRestart)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Bölüm kartı
+
+struct LevelIntroOverlay: View {
+    let level: Level
+    let showControls: Bool
+    let onStart: () -> Void
+
+    var body: some View {
+        OverlayShell {
+            Spacer()
+
+            VStack(spacing: 8) {
+                Text("BÖLÜM \(level.number)")
+                    .font(.system(size: 15, weight: .heavy, design: .rounded))
+                    .foregroundStyle(Palette.accent)
+                    .tracking(2)
+                Text(level.title)
+                    .font(.system(size: 38, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+            }
+
+            VStack(spacing: 6) {
+                Text("BÖLÜM SONUNDA")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.45))
+                    .tracking(1.5)
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Color(level.reward.swatch))
+                        .frame(width: 12, height: 12)
+                        .overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 1))
+                    Text(level.reward.displayName)
+                        .font(.system(size: 19, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+            }
+
+            if showControls {
+                Text("Ekrana dokun: zıpla.\nBasılı tut: daha yükseğe.")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.65))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
             }
 
             Spacer()
 
-            PrimaryButton(title: "BAŞLA", tint: Palette.accent, action: onStart)
-
-            Text("Kıl payı geçişler ve deniz yıldızları ekstra puan.")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.35))
-                .padding(.bottom, 34)
+            PrimaryButton(title: "DENİZE AÇIL", tint: Palette.accent, action: onStart)
         }
-        .padding(.horizontal, 40)
-        .background(Color.black.opacity(0.35).ignoresSafeArea())
+    }
+}
+
+// MARK: - Bölüm sonu
+
+struct LevelCompleteOverlay: View {
+    let level: Level
+    let companions: [AnimalKind]
+    let score: Int
+    let onNext: () -> Void
+    let onMenu: () -> Void
+
+    var body: some View {
+        OverlayShell {
+            Spacer()
+
+            Text("BÖLÜM \(level.number) TAMAM")
+                .font(.system(size: 26, weight: .black, design: .rounded))
+                .foregroundStyle(Palette.accent)
+                .multilineTextAlignment(.center)
+
+            Text(level.reward.greeting)
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 8)
+
+            Text("\(score)")
+                .font(.system(size: 56, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+
+            CrewStrip(companions: companions, title: "KAYIKTAKİLER")
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                PrimaryButton(title: "SONRAKİ BÖLÜM", tint: Palette.accent, action: onNext)
+                SecondaryButton(title: "MENÜ", action: onMenu)
+            }
+        }
+    }
+}
+
+// MARK: - Yolculuk tamam
+
+struct JourneyCompleteOverlay: View {
+    let companions: [AnimalKind]
+    let score: Int
+    let best: Int
+    let onRestart: () -> Void
+    let onMenu: () -> Void
+
+    var body: some View {
+        OverlayShell {
+            Spacer()
+
+            Text("YOLCULUK TAMAM")
+                .font(.system(size: 32, weight: .black, design: .rounded))
+                .foregroundStyle(Palette.gold)
+                .multilineTextAlignment(.center)
+
+            Text("Beş bölüm, beş arkadaş. Kayık artık kalabalık.")
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.8))
+                .multilineTextAlignment(.center)
+
+            CrewStrip(companions: companions, title: "MÜRETTEBAT")
+
+            HStack(spacing: 26) {
+                StatBadge(label: "SKOR", value: "\(score)", tint: .white)
+                StatBadge(label: "REKOR", value: "\(best)", tint: Palette.gold)
+            }
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                PrimaryButton(title: "BAŞTAN BAŞLA", tint: Palette.accent, action: onRestart)
+                SecondaryButton(title: "MENÜ", action: onMenu)
+            }
+        }
     }
 }
 
 // MARK: - Oyun sonu
 
 struct GameOverOverlay: View {
+    let level: Level
     let score: Int
-    let starfish: Int
     let best: Int
-    let didBeatBest: Bool
     let onRetry: () -> Void
     let onMenu: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
+        OverlayShell {
             Spacer()
 
-            Text(didBeatBest ? "YENİ REKOR" : "DEVRİLDİN")
+            Text("BATTIN")
                 .font(.system(size: 34, weight: .black, design: .rounded))
-                .foregroundStyle(didBeatBest ? Palette.gold : Palette.danger)
+                .foregroundStyle(Palette.danger)
+
+            Text("Bölüm \(level.number) · \(level.title)")
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.6))
 
             Text("\(score)")
-                .font(.system(size: 84, weight: .black, design: .rounded))
+                .font(.system(size: 72, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
 
-            HStack(spacing: 26) {
-                StatBadge(label: "REKOR", value: "\(best)", tint: .white.opacity(0.75))
-                StatBadge(label: "YILDIZ", value: "\(starfish)", tint: Palette.gold)
-            }
+            StatBadge(label: "REKOR", value: "\(best)", tint: Palette.gold)
 
             Spacer()
 
             VStack(spacing: 12) {
-                PrimaryButton(title: "TEKRAR", tint: Palette.accent, action: onRetry)
-
-                Button(action: onMenu) {
-                    Text("MENÜ")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.55))
-                }
+                PrimaryButton(title: "TEKRAR DENE", tint: Palette.accent, action: onRetry)
+                SecondaryButton(title: "MENÜ", action: onMenu)
             }
-            .padding(.bottom, 34)
         }
-        .padding(.horizontal, 40)
-        .background(Color.black.opacity(0.5).ignoresSafeArea())
     }
 }
 
-// MARK: - Küçük parçalar
+// MARK: - Ortak parçalar
+
+/// Bütün tam ekran kartların ortak çerçevesi.
+struct OverlayShell<Content: View>: View {
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(spacing: 18) {
+            content
+        }
+        .padding(.horizontal, 36)
+        .padding(.top, 60)
+        .padding(.bottom, 40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black.opacity(0.45).ignoresSafeArea())
+    }
+}
+
+/// Kayığa katılmış hayvanların listesi.
+struct CrewStrip: View {
+    let companions: [AnimalKind]
+    let title: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(title)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.45))
+                .tracking(1.5)
+
+            if companions.isEmpty {
+                Text("Henüz kimse yok — sadece kız ve ayıcığı")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.5))
+            } else {
+                FlowRow(spacing: 8) {
+                    ForEach(companions, id: \.self) { animal in
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color(animal.swatch))
+                                .frame(width: 9, height: 9)
+                                .overlay(Circle().stroke(.white.opacity(0.6), lineWidth: 0.8))
+                            Text(animal.displayName)
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.92))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(.white.opacity(0.14)))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Sığmayan öğeleri alt satıra taşıyan basit akış yerleşimi.
+struct FlowRow: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var rowWidth: CGFloat = 0
+        var totalHeight: CGFloat = 0
+        var rowHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if rowWidth > 0 && rowWidth + spacing + size.width > maxWidth {
+                totalHeight += rowHeight + spacing
+                rowWidth = size.width
+                rowHeight = size.height
+            } else {
+                rowWidth += (rowWidth > 0 ? spacing : 0) + size.width
+                rowHeight = max(rowHeight, size.height)
+            }
+        }
+        return CGSize(width: maxWidth == .infinity ? rowWidth : maxWidth, height: totalHeight + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        var y = bounds.minY
+        var rowHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > bounds.minX && x + size.width > bounds.maxX {
+                x = bounds.minX
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            subview.place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
+    }
+}
 
 struct StatBadge: View {
     let label: String
@@ -141,8 +416,9 @@ struct StatBadge: View {
                 .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundStyle(tint)
             Text(label)
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.4))
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.45))
+                .tracking(1)
         }
     }
 }
@@ -155,15 +431,31 @@ struct PrimaryButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 19, weight: .heavy, design: .rounded))
+                .font(.system(size: 17, weight: .heavy, design: .rounded))
                 .foregroundStyle(Color.black.opacity(0.85))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 17)
+                .padding(.vertical, 16)
                 .background(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .fill(tint)
-                        .shadow(color: tint.opacity(0.5), radius: 18, y: 6)
+                        .shadow(color: tint.opacity(0.45), radius: 16, y: 5)
                 )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct SecondaryButton: View {
+    let title: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.6))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
         }
         .buttonStyle(.plain)
     }

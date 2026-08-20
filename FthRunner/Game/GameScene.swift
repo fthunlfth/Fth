@@ -1,122 +1,130 @@
 import SpriteKit
 
-/// Oyunun tamamı: akıntı hızı, engel üretimi, çarpışma ve efektler.
-/// Fizik motoru kullanmıyoruz — hareket ve çarpışma elle hesaplanıyor,
-/// böylece Tuning'deki ayarlar birebir öngörülebilir sonuç veriyor.
+/// Yandan görünen, bölüm bölüm ilerleyen oyunun tamamı:
+/// dünya sola akar, kayık dalganın üstünde durur, dokunuşla zıplar.
+/// Fizik motoru yok — hareket ve çarpışma elle hesaplanıyor, böylece
+/// `Tuning` içindeki sayılar birebir öngörülebilir sonuç veriyor.
 final class GameScene: SKScene {
 
     weak var state: GameState?
 
     // MARK: - Katmanlar
-    private let backgroundLayer = SKNode()
+    private let sky = SkyNode()
+    private let sea = SeaNode()
     private let worldLayer = SKNode()
     private let effectsLayer = SKNode()
-    private let ocean = Ocean()
 
     // MARK: - Oyun nesneleri
     private var boat: BoatNode!
     private var obstacles: [ObstacleNode] = []
     private var starfishes: [StarfishNode] = []
+    private var goalIsland: GoalIslandNode?
 
     // MARK: - Durum
+    private var level = Level.level(at: 0)
     private var isRunning = false
     private var lastUpdateTime: TimeInterval = 0
     private var elapsed: TimeInterval = 0
-    private var scrollSpeed = Tuning.startScrollSpeed
-    private var distance: CGFloat = 0
+    /// Dünyanın kaydırılmış toplam mesafesi. Bölüm ilerlemesi bu.
+    private var cameraX: CGFloat = 0
+    private var scrollSpeed: CGFloat = 0
     private var bonusScore = 0
-    private var timeUntilNextWave: TimeInterval = 0
-    private var timeUntilNextWhirlpool: TimeInterval = 0
-    /// Bir önceki geçilebilir koridorun merkezi — sıradakinin erişilebilir kalması için.
-    private var lastCorridorCenter: CGFloat?
+    private var nextSpawnWorldX: CGFloat = 0
+    private var invulnerableUntil: TimeInterval = 0
+    private var isCelebrating = false
 
-    // Kayık hareketi
-    private var targetX: CGFloat = 0
-    private var lastTouchX: CGFloat = 0
-    private var boatVelocityX: CGFloat = 0
-    /// Girdapta biriken dönme açısı.
-    private var whirlSpin: CGFloat = 0
+    // MARK: - Kayık hareketi
+    private var boatY: CGFloat = 0
+    private var velocityY: CGFloat = 0
+    private var isGrounded = true
+    private var coyoteTimer: TimeInterval = 0
+    private var jumpBufferTimer: TimeInterval = 0
+    private var holdTimer: TimeInterval = 0
+    private var isHoldingJump = false
 
-    private var boatY: CGFloat { Tuning.boatBottomInset }
-    private var slotWidth: CGFloat { size.width / CGFloat(Tuning.slotCount) }
+    private var boatScreenX: CGFloat { size.width * Tuning.boatScreenXRatio }
+    private var waterLine: CGFloat { size.height * Tuning.waterLineRatio }
+    private var isInvulnerable: Bool { elapsed < invulnerableUntil }
 
     // MARK: - Sahne kurulumu
 
     override func didMove(to view: SKView) {
         scaleMode = .resizeFill
         anchorPoint = .zero
-        backgroundColor = Palette.seaTop
 
-        backgroundLayer.zPosition = 0
-        worldLayer.zPosition = 10
-        effectsLayer.zPosition = 30
-        addChild(backgroundLayer)
+        sky.zPosition = 0
+        sea.zPosition = 10
+        worldLayer.zPosition = 20
+        effectsLayer.zPosition = 40
+        addChild(sky)
+        addChild(sea)
         addChild(worldLayer)
         addChild(effectsLayer)
 
-        buildBackground()
-
-        boat = BoatNode(width: Tuning.boatWidth, collisionRadius: Tuning.boatRadius)
-        boat.zPosition = 20
+        boat = BoatNode(length: Tuning.boatLength, height: Tuning.boatHeight)
+        boat.zPosition = 25
         worldLayer.addChild(boat)
         boat.setWakeTarget(worldLayer)
 
+        applyTheme()
         resetToIdle()
     }
 
     override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
-        guard size.width > 0, backgroundLayer.parent != nil else { return }
-        buildBackground()
+        guard size.width > 0, sky.parent != nil else { return }
+        applyTheme()
     }
 
-    private func buildBackground() {
-        backgroundLayer.removeAllChildren()
-        ocean.build(size: size)
-        backgroundLayer.addChild(ocean)
+    private func applyTheme() {
+        sky.build(size: size, waterLine: waterLine, theme: level.sky)
+        sea.build(size: size, waterLine: waterLine, theme: level.sky)
+        backgroundColor = level.sky.skyTop
     }
 
-    // MARK: - Tur yönetimi
+    // MARK: - Bölüm yönetimi
 
-    /// Menüde beklerken: kayık ortada, deniz sakin.
+    /// Menüde ve bölüm kartında görünen sakin hâl.
     func resetToIdle() {
         isRunning = false
+        isCelebrating = false
         elapsed = 0
-        distance = 0
+        cameraX = 0
+        // Menüde ve bölüm kartında deniz yavaşça akmaya devam etsin.
+        scrollSpeed = level.scrollSpeed * 0.22
         bonusScore = 0
-        scrollSpeed = Tuning.startScrollSpeed
         lastUpdateTime = 0
-        whirlSpin = 0
-        lastCorridorCenter = nil
+        invulnerableUntil = 0
+        velocityY = 0
+        isGrounded = true
+        coyoteTimer = 0
+        jumpBufferTimer = 0
+        holdTimer = 0
+        isHoldingJump = false
 
         clearWorld()
 
-        targetX = size.width / 2
-        boatVelocityX = 0
-        boat.reset(at: CGPoint(x: targetX, y: boatY))
-        boat.setSpin(0)
+        boatY = waterLine
+        boat.reset(at: CGPoint(x: boatScreenX, y: boatY))
+        boat.setCompanions(state?.companions ?? [])
         worldLayer.position = .zero
     }
 
-    func startRun() {
+    /// Bölüm kartı açılırken: temayı o bölüme çevir, sahneyi sakin hâle al.
+    func prepare(level index: Int) {
+        level = Level.level(at: index)
+        applyTheme()
         resetToIdle()
-        timeUntilNextWave = 0.7
-        timeUntilNextWhirlpool = Tuning.whirlpoolUnlockTime
-        isRunning = true
-        Haptics.prepare()
-        state?.beginRun()
     }
 
-    private func capsize() {
-        guard isRunning else { return }
-        isRunning = false
-
-        boat.capsize(in: effectsLayer)
-        Haptics.crash()
-        flashScreen(color: Palette.buoy, alpha: 0.5)
-        shakeWorld()
-
-        state?.endRun()
+    /// Bölüm kartından oynamaya geçiş.
+    func startLevel(_ index: Int) {
+        prepare(level: index)
+        scrollSpeed = level.scrollSpeed
+        nextSpawnWorldX = size.width + 220
+        isRunning = true
+        Haptics.prepare()
+        state?.beginLevel()
     }
 
     private func clearWorld() {
@@ -124,6 +132,8 @@ final class GameScene: SKScene {
         obstacles.removeAll()
         for starfish in starfishes { starfish.removeFromParent() }
         starfishes.removeAll()
+        goalIsland?.removeFromParent()
+        goalIsland = nil
     }
 
     // MARK: - Ana döngü
@@ -133,301 +143,299 @@ final class GameScene: SKScene {
         let rawDelta = lastUpdateTime == 0 ? 0 : currentTime - lastUpdateTime
         lastUpdateTime = currentTime
         let deltaTime = min(max(rawDelta, 0), 1.0 / 30.0)
+        elapsed += deltaTime
 
-        ocean.update(deltaTime: deltaTime,
-                     scrollSpeed: isRunning ? scrollSpeed : Tuning.startScrollSpeed * 0.35)
+        cameraX += scrollSpeed * CGFloat(deltaTime)
+
+        sky.update(cameraX: cameraX)
+        sea.update(cameraX: cameraX, time: elapsed, scrollSpeed: scrollSpeed, deltaTime: deltaTime)
+
+        updateBoat(deltaTime: deltaTime)
+        repositionWorldObjects()
 
         guard isRunning else { return }
 
-        elapsed += deltaTime
-        scrollSpeed = min(Tuning.maxScrollSpeed,
-                          Tuning.startScrollSpeed + Tuning.speedGainPerSecond * CGFloat(elapsed))
-
+        updateGoal(deltaTime: deltaTime)
         updateObstacles(deltaTime: deltaTime)
-        updateStarfishes(deltaTime: deltaTime)
-        updateBoat(deltaTime: deltaTime)
-        updateSpawning(deltaTime: deltaTime)
-        updateScore(deltaTime: deltaTime)
+        updateSpawning()
+        updateScore()
         checkCollisions()
     }
 
+    // MARK: - Kayık
+
     private func updateBoat(deltaTime: TimeInterval) {
-        // Girdapların toplam çekimi hedefi kaydırır: dümen tutmak zorlaşır.
-        var pull: CGFloat = 0
-        var strongestInfluence: CGFloat = 0
-        for case let whirlpool as WhirlpoolNode in obstacles {
-            pull += whirlpool.horizontalPull(towards: boat.position)
-            strongestInfluence = max(strongestInfluence, whirlpool.influence(at: boat.position))
-        }
-        targetX += pull * CGFloat(deltaTime)
+        let surfaceY = sea.surfaceY(screenX: boatScreenX, cameraX: cameraX, time: elapsed)
 
-        let minX = Tuning.sideMargin + boat.collisionRadius
-        let maxX = size.width - Tuning.sideMargin - boat.collisionRadius
-        targetX = min(max(targetX, minX), maxX)
-
-        let previousX = boat.position.x
-        // Kare hızından bağımsız yumuşatma.
-        let t = 1 - exp(-Tuning.boatFollowSharpness * CGFloat(deltaTime))
-        boat.position.x += (targetX - boat.position.x) * t
-        boat.position.y = boatY
-
-        boatVelocityX = deltaTime > 0 ? (boat.position.x - previousX) / CGFloat(deltaTime) : 0
-        boat.applyBank(horizontalVelocity: boatVelocityX)
-
-        // Girdaptan çıkınca dönme yavaşça sönsün.
-        if strongestInfluence > 0 {
-            whirlSpin += strongestInfluence * 7 * CGFloat(deltaTime)
+        if isGrounded {
+            boatY = surfaceY
+            velocityY = 0
+            coyoteTimer = Tuning.coyoteTime
+            // Dalganın eğimine yatıyor.
+            let slope = Wave.slope(atWorldX: cameraX + boatScreenX, time: elapsed)
+            boat.setPitch(atan(slope) * 0.85)
         } else {
-            whirlSpin *= exp(-4 * CGFloat(deltaTime))
+            coyoteTimer = max(0, coyoteTimer - deltaTime)
+            // Parmağı basılı tuttukça yükseliş uzuyor (Mario tarzı değişken zıplama).
+            let holdingRise = isHoldingJump && velocityY > 0 && holdTimer > 0
+            let scale = holdingRise ? Tuning.jumpHoldGravityScale : 1
+            holdTimer = max(0, holdTimer - deltaTime)
+
+            velocityY -= Tuning.gravity * scale * CGFloat(deltaTime)
+            boatY += velocityY * CGFloat(deltaTime)
+            boat.setPitch(max(-Tuning.jumpPitchAngle, min(Tuning.jumpPitchAngle, velocityY / 2200)))
+
+            if boatY <= surfaceY && velocityY <= 0 {
+                land(at: surfaceY)
+            }
         }
-        boat.setSpin(whirlSpin)
+
+        jumpBufferTimer = max(0, jumpBufferTimer - deltaTime)
+        if jumpBufferTimer > 0 && (isGrounded || coyoteTimer > 0) {
+            performJump()
+        }
+
+        boat.position = CGPoint(x: boatScreenX, y: boatY)
+    }
+
+    private func performJump() {
+        velocityY = Tuning.jumpImpulse
+        isGrounded = false
+        coyoteTimer = 0
+        jumpBufferTimer = 0
+        holdTimer = Tuning.maxJumpHoldTime
+        boat.setWakeActive(false)
+        boat.splash(in: effectsLayer, strength: 0.6)
+        Haptics.jump()
+    }
+
+    private func land(at surfaceY: CGFloat) {
+        let impact = min(1.6, abs(velocityY) / Tuning.jumpImpulse)
+        boatY = surfaceY
+        velocityY = 0
+        isGrounded = true
+        boat.setWakeActive(true)
+        boat.landingSquash()
+        boat.splash(in: effectsLayer, strength: 0.5 + impact)
+        if impact > 0.4 { Haptics.land() }
+    }
+
+    // MARK: - Dünya nesnelerinin yerleşimi
+
+    /// Engeller dünya koordinatında yaşıyor; ekran konumu her karede
+    /// kameradan ve su yüzeyinden hesaplanıyor.
+    private func repositionWorldObjects() {
+        for obstacle in obstacles {
+            let screenX = obstacle.worldX - cameraX
+            let baseY = obstacle.ridesWave
+                ? sea.surfaceY(screenX: screenX, cameraX: cameraX, time: elapsed)
+                : waterLine
+            obstacle.position = CGPoint(x: screenX, y: baseY + obstacle.verticalOffset)
+        }
+
+        for starfish in starfishes {
+            starfish.position.x = starfish.worldX - cameraX
+        }
+
+        if let island = goalIsland {
+            let screenX = island.worldX - cameraX
+            island.position = CGPoint(x: screenX,
+                                      y: sea.surfaceY(screenX: screenX, cameraX: cameraX, time: elapsed) - 6)
+        }
     }
 
     private func updateObstacles(deltaTime: TimeInterval) {
-        let step = scrollSpeed * CGFloat(deltaTime)
         var stillAlive: [ObstacleNode] = []
-
         for obstacle in obstacles {
-            obstacle.position.y -= step
-            obstacle.advance(deltaTime: deltaTime, sceneSize: size)
+            obstacle.advance(deltaTime: deltaTime)
 
-            // Engel kayığın hizasını geçtiği anda kıl payı kontrolü.
-            if !obstacle.hasBeenPassed && obstacle.position.y < boatY {
+            if !obstacle.hasBeenPassed && obstacle.worldX < cameraX + boatScreenX {
                 obstacle.hasBeenPassed = true
                 evaluateNearMiss(for: obstacle)
             }
 
-            if obstacle.position.y < -Tuning.whirlpoolPullRadius - 60 {
+            if obstacle.worldX - cameraX < -240 {
                 obstacle.removeFromParent()
             } else {
                 stillAlive.append(obstacle)
             }
         }
         obstacles = stillAlive
+
+        starfishes.removeAll { starfish in
+            guard starfish.worldX - cameraX < -80 else { return false }
+            starfish.removeFromParent()
+            return true
+        }
     }
 
-    private func updateStarfishes(deltaTime: TimeInterval) {
-        let step = scrollSpeed * CGFloat(deltaTime)
-        var stillAlive: [StarfishNode] = []
+    // MARK: - Üretim
 
-        for starfish in starfishes {
-            starfish.position.y -= step
-            if starfish.position.y < -60 {
-                starfish.removeFromParent()
-            } else {
-                stillAlive.append(starfish)
+    private func updateSpawning() {
+        let horizon = cameraX + size.width + 240
+        let spawnLimit = level.length - Tuning.goalClearanceDistance
+
+        while nextSpawnWorldX < horizon && nextSpawnWorldX < spawnLimit {
+            spawnObstacle(kind: level.kinds.randomElement() ?? .rock, at: nextSpawnWorldX)
+
+            let gap = CGFloat.random(in: level.gapRange)
+            // İki engelin arasına deniz yıldızı yayı serpiştiriliyor.
+            if Double.random(in: 0...1) < Tuning.starfishChance {
+                spawnStarfishArc(centeredAt: nextSpawnWorldX + gap / 2)
             }
-        }
-        starfishes = stillAlive
-    }
-
-    private func updateSpawning(deltaTime: TimeInterval) {
-        timeUntilNextWave -= deltaTime
-        if timeUntilNextWave <= 0 {
-            spawnWave()
-            timeUntilNextWave = max(Tuning.minSpawnInterval,
-                                    Tuning.startSpawnInterval - Tuning.spawnIntervalDecayPerSecond * elapsed)
-        }
-
-        guard elapsed > Tuning.whirlpoolUnlockTime else { return }
-        timeUntilNextWhirlpool -= deltaTime
-        if timeUntilNextWhirlpool <= 0 {
-            spawnWhirlpool()
-            timeUntilNextWhirlpool = Tuning.whirlpoolInterval
+            nextSpawnWorldX += gap
         }
     }
 
-    private func updateScore(deltaTime: TimeInterval) {
-        distance += scrollSpeed * CGFloat(deltaTime)
-        let total = Int(distance / Tuning.distancePerScorePoint) + bonusScore
-        state?.setScore(total)
-    }
-
-    // MARK: - Engel üretimi
-
-    private enum ObstacleKind {
-        case rock, driftwood, jellyfish, shark, net
-
-        /// Kaç sütun kaplıyor.
-        var slotSpan: Int {
-            switch self {
-            case .driftwood, .net: return 2
-            case .rock, .jellyfish, .shark: return 1
-            }
-        }
-    }
-
-    private func spawnWave() {
-        let spawnY = size.height + 90
-        let freeSlots = max(Int(Tuning.minFreeSlots),
-                            Int(round(Tuning.startFreeSlots - Tuning.freeSlotsShrinkPerSecond * CGFloat(elapsed))))
-        let freeCount = max(1, min(freeSlots, Tuning.slotCount - 1))
-        let corridor = pickCorridor(freeCount: freeCount)
-
-        var slot = 0
-        var didSpawnAnything = false
-
-        while slot < Tuning.slotCount {
-            guard !corridor.contains(slot) else {
-                slot += 1
-                continue
-            }
-            // Her dolu sütun engel taşımak zorunda değil; deniz böyle daha doğal görünüyor.
-            guard Double.random(in: 0...1) < Tuning.slotFillChance else {
-                slot += 1
-                continue
-            }
-
-            let canSpanTwo = slot + 1 < Tuning.slotCount && !corridor.contains(slot + 1)
-            let kind = pickObstacleKind(canSpanTwo: canSpanTwo)
-            let span = kind.slotSpan
-            let centerX = (CGFloat(slot) + CGFloat(span) / 2) * slotWidth
-            // Küçük dikey kaydırma, sıraların cetvelle çizilmiş gibi durmasını engelliyor.
-            let y = spawnY + CGFloat.random(in: -12...12)
-
-            spawnObstacle(kind: kind, centerX: centerX, y: y, span: span)
-            didSpawnAnything = true
-            slot += span
-        }
-
-        // Şansa hiç engel çıkmadıysa dalgayı boş geçmeyelim.
-        if !didSpawnAnything {
-            let fallbackSlot = (0..<Tuning.slotCount).first { !corridor.contains($0) } ?? 0
-            spawnObstacle(kind: .rock,
-                          centerX: (CGFloat(fallbackSlot) + 0.5) * slotWidth,
-                          y: spawnY,
-                          span: 1)
-        }
-
-        if Double.random(in: 0...1) < Tuning.starfishChance {
-            let center = corridorCenterX(corridor)
-            spawnStarfish(at: CGPoint(x: center, y: spawnY + 40))
-        }
-    }
-
-    /// Boş koridoru seçer. Bir öncekine göre çok uzağa kaçmasına izin vermez,
-    /// yoksa yüksek hızda geçmesi imkânsız hale gelir.
-    private func pickCorridor(freeCount: Int) -> Range<Int> {
-        let maxStart = Tuning.slotCount - freeCount
-        var candidates = Array(0...maxStart)
-
-        if let previous = lastCorridorCenter {
-            let reach = size.width * Tuning.maxCorridorShiftRatio
-            let reachable = candidates.filter { start in
-                abs(corridorCenterX(start..<(start + freeCount)) - previous) <= reach
-            }
-            if !reachable.isEmpty { candidates = reachable }
-        }
-
-        let start = candidates.randomElement() ?? 0
-        let corridor = start..<(start + freeCount)
-        lastCorridorCenter = corridorCenterX(corridor)
-        return corridor
-    }
-
-    private func corridorCenterX(_ corridor: Range<Int>) -> CGFloat {
-        (CGFloat(corridor.lowerBound) + CGFloat(corridor.count) / 2) * slotWidth
-    }
-
-    /// Engel çeşitleri oyun ilerledikçe havuza giriyor: ilk saniyeler sadece kaya,
-    /// sonra kütük, denizanası, köpek balığı ve en son ağ.
-    private func pickObstacleKind(canSpanTwo: Bool) -> ObstacleKind {
-        var pool: [ObstacleKind] = [.rock, .rock, .rock]
-        if elapsed > Tuning.logUnlockTime { pool += [.driftwood, .driftwood] }
-        if elapsed > Tuning.jellyfishUnlockTime { pool += [.jellyfish, .jellyfish] }
-        if elapsed > Tuning.sharkUnlockTime { pool += [.shark, .shark, .shark] }
-        if elapsed > Tuning.netUnlockTime { pool += [.net, .net] }
-
-        if !canSpanTwo {
-            pool = pool.filter { $0.slotSpan == 1 }
-        }
-        return pool.randomElement() ?? .rock
-    }
-
-    private func spawnObstacle(kind: ObstacleKind, centerX: CGFloat, y: CGFloat, span: Int) {
+    private func spawnObstacle(kind: ObstacleKind, at worldX: CGFloat) {
         let node: ObstacleNode
 
         switch kind {
         case .rock:
             let rock = RockNode()
-            rock.build(radius: .random(in: Tuning.rockRadiusRange))
+            rock.build(width: .random(in: 46...70), height: .random(in: 46...74))
             node = rock
 
         case .driftwood:
             let log = DriftwoodNode()
-            log.build(length: min(Tuning.logLength, slotWidth * CGFloat(span) * 0.88))
+            log.build(length: .random(in: 76...118))
             node = log
+
+        case .sharkFin:
+            let fin = SharkFinNode()
+            fin.build(closingSpeed: .random(in: 55...105))
+            node = fin
 
         case .jellyfish:
             let jellyfish = JellyfishNode()
-            jellyfish.build(originX: centerX)
+            jellyfish.build()
             node = jellyfish
-
-        case .shark:
-            let shark = SharkNode()
-            shark.build(originX: centerX, direction: Bool.random() ? 1 : -1)
-            node = shark
 
         case .net:
             let net = FishingNetNode()
-            net.build(span: slotWidth * CGFloat(span) * 0.9)
+            net.build(height: .random(in: 88...112))
             node = net
+
+        case .seagull:
+            let seagull = SeagullNode()
+            seagull.build(flyHeight: .random(in: 108...142))
+            node = seagull
+
+        case .whirlpool:
+            let whirlpool = WhirlpoolNode()
+            whirlpool.build(width: .random(in: 130...180))
+            node = whirlpool
         }
 
-        node.position = CGPoint(x: centerX, y: y)
-        node.zPosition = 12
+        node.worldX = worldX
+        node.zPosition = 22
         worldLayer.addChild(node)
         obstacles.append(node)
     }
 
-    private func spawnWhirlpool() {
-        let inset = Tuning.whirlpoolPullRadius * 0.45
-        let whirlpool = WhirlpoolNode()
-        whirlpool.build()
-        whirlpool.position = CGPoint(x: .random(in: inset...(size.width - inset)),
-                                     y: size.height + Tuning.whirlpoolPullRadius)
-        // Girdap suyun bir parçası; engellerin altında çizilsin.
-        whirlpool.zPosition = 11
-        worldLayer.addChild(whirlpool)
-        obstacles.append(whirlpool)
+    /// Zıplama yayını takip eden üç deniz yıldızı — nereden atlanacağını da öğretiyor.
+    private func spawnStarfishArc(centeredAt worldX: CGFloat) {
+        let spacing: CGFloat = 46
+        for offset in [-1, 0, 1] {
+            let starfish = StarfishNode(radius: Tuning.starfishRadius)
+            starfish.worldX = worldX + CGFloat(offset) * spacing
+            // Ortadaki en yüksekte: yayın tepesi.
+            let lift: CGFloat = offset == 0 ? 118 : 88
+            starfish.position = CGPoint(x: starfish.worldX - cameraX, y: waterLine + lift)
+            starfish.zPosition = 24
+            worldLayer.addChild(starfish)
+            starfishes.append(starfish)
+        }
     }
 
-    private func spawnStarfish(at point: CGPoint) {
-        let starfish = StarfishNode(radius: Tuning.starfishRadius)
-        starfish.position = point
-        starfish.zPosition = 15
-        worldLayer.addChild(starfish)
-        starfishes.append(starfish)
+    // MARK: - Bölüm sonu
+
+    private func updateGoal(deltaTime: TimeInterval) {
+        if goalIsland == nil && cameraX > level.length - size.width {
+            let island = GoalIslandNode()
+            island.build(reward: level.reward)
+            island.worldX = level.length + Tuning.goalSlowdownDistance
+            island.zPosition = 21
+            worldLayer.addChild(island)
+            goalIsland = island
+        }
+
+        guard let island = goalIsland else { return }
+
+        // Adaya yaklaştıkça yavaşla, kayığın hizasında dur.
+        let stopScreenX = boatScreenX + 130
+        let remaining = (island.worldX - cameraX) - stopScreenX
+        let ratio = max(0, min(1, remaining / Tuning.goalSlowdownDistance))
+        // Taban hız olmadan son metreler asimptotik olarak sürünürdü.
+        scrollSpeed = level.scrollSpeed * max(0.2, ratio)
+
+        if remaining <= 6 && !isCelebrating {
+            celebrate(island: island)
+        }
+    }
+
+    private func celebrate(island: GoalIslandNode) {
+        isCelebrating = true
+        isRunning = false
+        scrollSpeed = 0
+        // Bölümü bitirme primi; skor artık donduğu için bir kez elle yansıtılıyor.
+        bonusScore += Tuning.levelClearScore
+        state?.setScore(Int(cameraX / Tuning.distancePerScorePoint) + bonusScore)
+        Haptics.celebrate()
+
+        let landingPoint = CGPoint(x: boat.position.x - island.position.x - Tuning.boatLength * 0.25,
+                                   y: boat.position.y - island.position.y + Tuning.boatHeight * 0.6)
+        let reward = level.reward
+
+        island.launchAnimal(to: landingPoint) { [weak self] in
+            guard let self else { return }
+            self.boat.addCompanion(reward)
+            self.confetti()
+            self.state?.completeLevel()
+        }
+    }
+
+    private func confetti() {
+        let colors: [UIColor] = [Palette.lifeVest, Palette.dress, Palette.starfish, Palette.foam, Palette.palm]
+        for color in colors {
+            let emitter = SKEmitterNode()
+            emitter.particleTexture = TextureFactory.softCircle(diameter: 20, color: color)
+            emitter.numParticlesToEmit = 26
+            emitter.particleBirthRate = 320
+            emitter.particleLifetime = 1.6
+            emitter.particleLifetimeRange = 0.6
+            emitter.particleSize = CGSize(width: 9, height: 9)
+            emitter.particleAlphaSpeed = -0.6
+            emitter.particleColor = color
+            emitter.particleColorBlendFactor = 1
+            emitter.emissionAngle = .pi / 2
+            emitter.emissionAngleRange = 1.5
+            emitter.particleSpeed = 320
+            emitter.particleSpeedRange = 160
+            emitter.yAcceleration = -520
+            emitter.position = CGPoint(x: boat.position.x, y: boat.position.y + Tuning.boatHeight)
+            emitter.zPosition = 60
+            effectsLayer.addChild(emitter)
+            emitter.run(.sequence([.wait(forDuration: 2.6), .removeFromParent()]))
+        }
+    }
+
+    // MARK: - Puan
+
+    private func updateScore() {
+        let total = Int(cameraX / Tuning.distancePerScorePoint) + bonusScore
+        state?.setScore(total)
+        state?.setProgress(Double(cameraX / level.length))
     }
 
     // MARK: - Çarpışma
 
     private func checkCollisions() {
-        let center = boat.position
-        let radius = boat.collisionRadius
-
-        for obstacle in obstacles {
-            // Uzaktaki engelleri hızlıca ele.
-            guard abs(obstacle.position.y - center.y) < 200 else { continue }
-
-            if let core = obstacle.lethalCore,
-               core.offset(by: obstacle.position).intersects(circleAt: center, radius: radius) {
-                capsize()
-                return
-            }
-
-            for shape in obstacle.sceneCollisionShapes()
-            where shape.intersects(circleAt: center, radius: radius) {
-                capsize()
-                return
-            }
-        }
+        let boatRect = boat.collisionRect.offsetBy(dx: boat.position.x, dy: boat.position.y)
 
         for starfish in starfishes {
-            let combined = starfish.radius + radius
-            let dx = starfish.position.x - center.x
-            let dy = starfish.position.y - center.y
-            guard dx * dx + dy * dy <= combined * combined else { continue }
+            let disc = CollisionShape.circle(center: starfish.position, radius: starfish.radius)
+            guard disc.intersects(rect: boatRect) else { continue }
 
             starfish.collect()
             starfishes.removeAll { $0 === starfish }
@@ -435,35 +443,96 @@ final class GameScene: SKScene {
             state?.collectStarfish()
             Haptics.pickup()
         }
+
+        guard !isInvulnerable else { return }
+
+        for obstacle in obstacles {
+            guard abs(obstacle.position.x - boatRect.midX) < 220 else { continue }
+            for shape in obstacle.sceneCollisionShapes() where shape.intersects(rect: boatRect) {
+                takeHit(from: obstacle)
+                return
+            }
+        }
+    }
+
+    private func takeHit(from obstacle: ObstacleNode) {
+        // Çarpılan engel dağılıyor ki aynı kare içinde tekrar tekrar vurmasın.
+        obstacle.hasBeenPassed = true
+        burst(at: obstacle.position, color: Palette.foam)
+        obstacle.removeFromParent()
+        obstacles.removeAll { $0 === obstacle }
+
+        shakeWorld()
+
+        guard let state else { return }
+        if state.loseLife() {
+            invulnerableUntil = elapsed + Tuning.invulnerabilityTime
+            boat.flashHurt(duration: Tuning.invulnerabilityTime)
+            flashScreen(color: Palette.buoy, alpha: 0.35)
+            Haptics.hurt()
+        } else {
+            isRunning = false
+            scrollSpeed = 0
+            boat.capsize(in: effectsLayer)
+            flashScreen(color: Palette.buoy, alpha: 0.5)
+            Haptics.crash()
+            state.endRun()
+        }
     }
 
     private func evaluateNearMiss(for obstacle: ObstacleNode) {
+        let boatRect = boat.collisionRect.offsetBy(dx: boat.position.x, dy: boat.position.y)
         let shapes = obstacle.sceneCollisionShapes()
         guard !shapes.isEmpty else { return }
 
-        let closest = shapes.map { $0.distance(toCircleAt: boat.position, radius: boat.collisionRadius) }.min()
-        guard let closest, closest > 0, closest < Tuning.nearMissDistance else { return }
+        // Zıplanan engelde tepe ile tekne dibi arası, martıda tam tersi.
+        let clearance: CGFloat
+        if obstacle.mustDuckUnder {
+            clearance = (shapes.map(\.bottomY).min() ?? 0) - boatRect.maxY
+        } else {
+            clearance = boatRect.minY - (shapes.map(\.topY).max() ?? 0)
+        }
 
-        bonusScore += Tuning.nearMissScore
-        state?.registerNearMiss()
+        guard clearance > 0, clearance < 26 else { return }
+        bonusScore += 2
         Haptics.nearMiss()
-        showNearMissSpark()
+        showSpark(at: CGPoint(x: boat.position.x, y: boatRect.minY))
     }
 
     // MARK: - Efektler
 
-    private func showNearMissSpark() {
-        let ring = SKShapeNode(circleOfRadius: boat.collisionRadius * 1.5)
-        ring.position = boat.position
+    private func showSpark(at point: CGPoint) {
+        let ring = SKShapeNode(circleOfRadius: 14)
+        ring.position = point
         ring.strokeColor = Palette.foam
         ring.lineWidth = 2
         ring.fillColor = .clear
-        ring.zPosition = 25
-        worldLayer.addChild(ring)
+        ring.zPosition = 45
+        effectsLayer.addChild(ring)
         ring.run(.sequence([
-            .group([.scale(to: 2.4, duration: 0.3), .fadeOut(withDuration: 0.3)]),
+            .group([.scale(to: 2.6, duration: 0.3), .fadeOut(withDuration: 0.3)]),
             .removeFromParent()
         ]))
+    }
+
+    private func burst(at point: CGPoint, color: UIColor) {
+        let emitter = SKEmitterNode()
+        emitter.particleTexture = TextureFactory.softCircle(diameter: 24, color: color)
+        emitter.numParticlesToEmit = 40
+        emitter.particleBirthRate = 1600
+        emitter.particleLifetime = 0.6
+        emitter.particleSize = CGSize(width: 14, height: 14)
+        emitter.particleScaleSpeed = -0.8
+        emitter.particleAlphaSpeed = -1.4
+        emitter.particleColor = color
+        emitter.particleColorBlendFactor = 1
+        emitter.emissionAngleRange = .pi * 2
+        emitter.particleSpeed = 220
+        emitter.particleSpeedRange = 140
+        emitter.position = point
+        emitter.zPosition = 50
+        effectsLayer.addChild(emitter)
+        emitter.run(.sequence([.wait(forDuration: 1.2), .removeFromParent()]))
     }
 
     private func flashScreen(color: UIColor, alpha: CGFloat) {
@@ -476,10 +545,10 @@ final class GameScene: SKScene {
     }
 
     private func shakeWorld() {
-        let amplitude: CGFloat = 15
+        let amplitude: CGFloat = 12
         var steps: [SKAction] = []
-        for index in 0..<8 {
-            let decay = 1 - CGFloat(index) / 8
+        for index in 0..<7 {
+            let decay = 1 - CGFloat(index) / 7
             steps.append(.move(to: CGPoint(x: .random(in: -amplitude...amplitude) * decay,
                                            y: .random(in: -amplitude...amplitude) * decay),
                                duration: 0.04))
@@ -489,19 +558,18 @@ final class GameScene: SKScene {
     }
 
     // MARK: - Girdi
-    // Parmağın mutlak yerini değil, hareketini kullanıyoruz:
-    // ekranın istediğin yerinden sürükleyebilirsin, kayık parmağa zıplamaz.
+    // Ekranın herhangi bir yerine dokun: zıplar. Basılı tutarsan daha yükseğe.
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        lastTouchX = touch.location(in: self).x
-        targetX = boat.position.x
+        isHoldingJump = true
+        jumpBufferTimer = Tuning.jumpBufferTime
     }
 
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        let x = touch.location(in: self).x
-        targetX += (x - lastTouchX) * Tuning.dragSensitivity
-        lastTouchX = x
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        isHoldingJump = false
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        isHoldingJump = false
     }
 }

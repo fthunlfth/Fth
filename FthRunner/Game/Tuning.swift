@@ -3,97 +3,67 @@ import Foundation
 
 /// Oyunun tüm denge ayarları burada. Oyun hissini değiştirmek için
 /// başka bir dosyaya dokunmaya gerek yok — sadece bu sayıları oynat.
+/// (Bölüm uzunlukları ve engel karışımı `Level.swift` içinde.)
 enum Tuning {
 
-    // MARK: - Akıntı hızı
-    /// Oyunun başladığı kaydırma hızı (nokta/saniye).
-    static let startScrollSpeed: CGFloat = 400
-    static let maxScrollSpeed: CGFloat = 1080
-    /// Saniyede ne kadar hızlanıyoruz.
-    static let speedGainPerSecond: CGFloat = 12
+    // MARK: - Sahne yerleşimi
+    /// Kayık ekranın solundan bu oranda duruyor; dünya sola akıyor.
+    static let boatScreenXRatio: CGFloat = 0.30
+    /// Sakin su seviyesi, ekran yüksekliğinin oranı olarak (alttan).
+    static let waterLineRatio: CGFloat = 0.40
 
     // MARK: - Kayık
-    /// Çarpışma dairesinin yarıçapı. Görsel gövdeden biraz küçük tutuldu ki
-    /// oyuncu "değmedim ki" dememesin.
-    static let boatRadius: CGFloat = 19
-    /// Kayığın çizim genişliği.
-    static let boatWidth: CGFloat = 54
-    /// Kayığın ekranın altından yüksekliği.
-    static let boatBottomInset: CGFloat = 175
-    /// Parmağı takip yumuşaklığı. Büyük = daha keskin/anında.
-    static let boatFollowSharpness: CGFloat = 15
-    /// Parmak hareketinin kayığa çarpanı. 1.0 = birebir.
-    static let dragSensitivity: CGFloat = 1.15
-    static let sideMargin: CGFloat = 10
+    static let boatLength: CGFloat = 96
+    static let boatHeight: CGFloat = 36
+    /// Çarpışma dikdörtgeni görsel gövdeden bu kadar içeride — "değmedim ki" dedirtmesin.
+    static let boatCollisionInset: CGFloat = 7
 
-    // MARK: - Engel dalgaları
-    /// Ekran kaç sütuna bölünüyor. Engeller bu sütunlara yerleşir.
-    static let slotCount = 5
-    static let startSpawnInterval: TimeInterval = 1.05
-    static let minSpawnInterval: TimeInterval = 0.52
-    static let spawnIntervalDecayPerSecond: TimeInterval = 0.012
-    /// Başlangıçta kaç sütun boş bırakılıyor (geçilecek koridor).
-    static let startFreeSlots: CGFloat = 2.9
-    static let minFreeSlots: CGFloat = 1.0
-    static let freeSlotsShrinkPerSecond: CGFloat = 0.022
-    /// Dolu sütunların gerçekten engel içerme olasılığı. Düşürürsen deniz seyrekleşir.
-    static let slotFillChance: Double = 0.86
-    /// Ardışık koridorlar arasındaki en fazla kayma (ekran genişliğinin oranı).
-    /// Küçültürsen oyun daha adil, büyütürsen daha vahşi olur.
-    static let maxCorridorShiftRatio: CGFloat = 0.6
+    // MARK: - Zıplama
+    static let gravity: CGFloat = 2700
+    static let jumpImpulse: CGFloat = 800
+    /// Parmağı basılı tutarken yükselişte yerçekimi bu oranda uygulanır.
+    /// Küçük değer = basılı tutunca daha yükseğe zıplama.
+    static let jumpHoldGravityScale: CGFloat = 0.42
+    static let maxJumpHoldTime: TimeInterval = 0.26
+    /// Sudan ayrıldıktan sonra hâlâ zıplayabildiğin küçük tolerans.
+    static let coyoteTime: TimeInterval = 0.10
+    /// Havadayken erken basılan zıplama bu süre boyunca hafızada tutulur.
+    static let jumpBufferTime: TimeInterval = 0.12
+    /// Zıplarken kayığın burnu ne kadar kalkıyor.
+    static let jumpPitchAngle: CGFloat = 0.30
 
-    // MARK: - Engellerin sahneye girdiği saniyeler
-    static let logUnlockTime: TimeInterval = 6
-    static let jellyfishUnlockTime: TimeInterval = 13
-    static let sharkUnlockTime: TimeInterval = 20
-    static let netUnlockTime: TimeInterval = 32
+    // MARK: - Dalga
+    // Su yüzeyi iki sinüsün toplamı. Hem çizim hem kayığın oturduğu yükseklik
+    // hem de engellerin yerleşimi aynı fonksiyondan besleniyor.
+    static let waveAmplitude: CGFloat = 9
+    static let waveLength: CGFloat = 220
+    static let waveSpeed: CGFloat = 1.4
+    static let waveAmplitude2: CGFloat = 4
+    static let waveLength2: CGFloat = 96
+    static let waveSpeed2: CGFloat = 2.3
 
-    // MARK: - Köpek balığı
-    static let sharkLength: CGFloat = 78
-    static let sharkWidth: CGFloat = 30
-    /// Saniyede yatay kaç nokta yol alır.
-    static let sharkSwimSpeed: CGFloat = 95
-    /// Doğduğu yerden ne kadar uzağa gidip geri döner.
-    static let sharkSwimRange: CGFloat = 80
-
-    // MARK: - Girdap
-    static let whirlpoolUnlockTime: TimeInterval = 26
-    static let whirlpoolInterval: TimeInterval = 7.5
-    /// Bu yarıçapın içinde kayık merkeze doğru çekilir.
-    static let whirlpoolPullRadius: CGFloat = 135
-    /// Tam merkezde saniyede kaç nokta çeker (kenara doğru azalır).
-    static let whirlpoolPullStrength: CGFloat = 330
-    /// Bu yarıçapa girersen kayık devrilir.
-    static let whirlpoolCoreRadius: CGFloat = 26
-
-    // MARK: - Denizanası
-    static let jellyfishRadius: CGFloat = 22
-    /// Yanlara salınım genliği ve hızı.
-    static let jellyfishSwayAmplitude: CGFloat = 34
-    static let jellyfishSwaySpeed: CGFloat = 1.6
-
-    // MARK: - Kütük ve ağ
-    static let logLength: CGFloat = 130
-    static let logThickness: CGFloat = 26
-    static let netThickness: CGFloat = 20
-
-    // MARK: - Kaya
-    static let rockRadiusRange: ClosedRange<CGFloat> = 22...36
+    // MARK: - Can
+    static let livesPerLevel = 3
+    /// Yedikten sonra dokunulmazlık süresi.
+    static let invulnerabilityTime: TimeInterval = 1.5
 
     // MARK: - Puan
     /// Kaç nokta ilerleyince +1 skor.
-    static let distancePerScorePoint: CGFloat = 14
+    static let distancePerScorePoint: CGFloat = 16
     static let starfishScore = 5
-    static let nearMissScore = 2
-    /// Engele bu kadar yakın geçersen "kıl payı" sayılır.
-    static let nearMissDistance: CGFloat = 26
-    /// Bir dalgada deniz yıldızı çıkma olasılığı.
-    static let starfishChance: Double = 0.42
+    static let levelClearScore = 50
     static let starfishRadius: CGFloat = 13
+    /// Bir engel aralığında deniz yıldızı çıkma olasılığı.
+    static let starfishChance: Double = 0.55
+
+    // MARK: - Bölüm sonu
+    /// Bitişe bu kadar kala engel üretimi durur; ada rahatça görünsün.
+    static let goalClearanceDistance: CGFloat = 700
+    /// Adaya yaklaşınca kayığın yavaşladığı mesafe.
+    static let goalSlowdownDistance: CGFloat = 320
 
     // MARK: - Deniz görüntüsü
-    static let foamCount = 46
-    /// Köpüklerin kaydırma hızına göre oranı (paralaks).
-    static let foamParallaxRange: ClosedRange<CGFloat> = 0.18...0.55
-    static let waveLineCount = 7
+    static let foamCount = 26
+    static let cloudCount = 5
+    static let farIslandCount = 4
 }

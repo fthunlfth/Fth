@@ -4,6 +4,8 @@ import SpriteKit
 final class StarfishNode: SKNode {
 
     let radius: CGFloat
+    /// Dünya koordinatındaki yeri; ekran konumu kameradan hesaplanıyor.
+    var worldX: CGFloat = 0
 
     init(radius: CGFloat) {
         self.radius = radius

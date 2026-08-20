@@ -1,60 +1,60 @@
 import SpriteKit
 
-/// İki şamandıra arasına gerilmiş balık ağı. Geniş bir bariyer;
-/// oyunun ilerleyen dakikalarında koridoru gerçekten daraltıyor.
+/// İki şamandıra arasına gerilmiş ağ. Yüksek — tam zamanında ve
+/// parmağı basılı tutarak zıplamak gerekiyor.
 final class FishingNetNode: ObstacleNode {
 
-    private var span: CGFloat = 160
-    private let thickness = Tuning.netThickness
+    private let netWidth: CGFloat = 54
+    private var netHeight: CGFloat = 96
 
     override var localCollisionShapes: [CollisionShape] {
-        [.rect(CGRect(x: -span / 2, y: -thickness / 2, width: span, height: thickness))]
+        [.rect(CGRect(x: -netWidth * 0.34, y: 0, width: netWidth * 0.68, height: netHeight * 0.94))]
     }
 
-    func build(span: CGFloat) {
-        self.span = span
+    func build(height: CGFloat) {
+        netHeight = height
         visual.removeAllChildren()
 
-        // Ağın kendisi: çapraz örgü.
+        // İki direk.
+        for side in [CGFloat(-1), 1] {
+            let post = SKShapeNode(rectOf: CGSize(width: 5, height: netHeight), cornerRadius: 2.5)
+            post.fillColor = Palette.driftwood
+            post.strokeColor = Palette.hullDark
+            post.lineWidth = 1.5
+            post.position = CGPoint(x: side * netWidth * 0.32, y: netHeight / 2)
+            visual.addChild(post)
+        }
+
+        // Çapraz örgü.
         let mesh = CGMutablePath()
-        let step: CGFloat = 14
-        var x = -span / 2
-        while x < span / 2 {
-            mesh.move(to: CGPoint(x: x, y: -thickness / 2))
-            mesh.addLine(to: CGPoint(x: min(x + step, span / 2), y: thickness / 2))
-            mesh.move(to: CGPoint(x: min(x + step, span / 2), y: -thickness / 2))
-            mesh.addLine(to: CGPoint(x: x, y: thickness / 2))
-            x += step
+        let step: CGFloat = 15
+        var y: CGFloat = 6
+        while y < netHeight - 6 {
+            let next = min(y + step, netHeight - 6)
+            mesh.move(to: CGPoint(x: -netWidth * 0.32, y: y))
+            mesh.addLine(to: CGPoint(x: netWidth * 0.32, y: next))
+            mesh.move(to: CGPoint(x: netWidth * 0.32, y: y))
+            mesh.addLine(to: CGPoint(x: -netWidth * 0.32, y: next))
+            y = next
         }
         let meshNode = SKShapeNode(path: mesh)
         meshNode.strokeColor = Palette.net
         meshNode.lineWidth = 1.5
-        meshNode.alpha = 0.85
+        meshNode.alpha = 0.9
         visual.addChild(meshNode)
 
-        // Üst ve alt halatlar.
-        for y in [-thickness / 2, thickness / 2] {
-            let rope = SKShapeNode(rectOf: CGSize(width: span, height: 2.5), cornerRadius: 1.25)
-            rope.fillColor = Palette.net
-            rope.strokeColor = .clear
-            rope.position = CGPoint(x: 0, y: y)
-            visual.addChild(rope)
-        }
+        // Tepedeki şamandıra.
+        let buoy = SKShapeNode(circleOfRadius: 11)
+        buoy.fillColor = Palette.buoy
+        buoy.strokeColor = Palette.hullDark
+        buoy.lineWidth = 1.5
+        buoy.position = CGPoint(x: 0, y: netHeight)
+        visual.addChild(buoy)
 
-        // Uçlardaki şamandıralar.
-        for side in [CGFloat(-1), 1] {
-            let buoy = SKShapeNode(circleOfRadius: thickness * 0.55)
-            buoy.fillColor = Palette.buoy
-            buoy.strokeColor = Palette.deepShadow
-            buoy.lineWidth = 1.5
-            buoy.position = CGPoint(x: side * span / 2, y: 0)
-            visual.addChild(buoy)
-
-            let band = SKShapeNode(rectOf: CGSize(width: thickness * 1.1, height: 3), cornerRadius: 1.5)
-            band.fillColor = Palette.foam
-            band.strokeColor = .clear
-            band.position = buoy.position
-            visual.addChild(band)
-        }
+        let band = SKShapeNode(rectOf: CGSize(width: 22, height: 3.5), cornerRadius: 1.75)
+        band.fillColor = Palette.foam
+        band.strokeColor = .clear
+        band.position = buoy.position
+        visual.addChild(band)
     }
 }
