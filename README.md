@@ -1,7 +1,8 @@
 # Hira'nın Macerası — iOS yan kaydırmalı deniz oyunu
 
-Hira, elinde küçük gri ayıcığıyla kayığında denizde ilerliyor. Her bölümün
-sonunda bir hayvan kayığa katılıyor; ilki mavi gözlü beyaz kedi **Ted**.
+Hira, elinde küçük gri ayıcığı **Tedi** ile kayığında denizde ilerliyor.
+Her bölümün sonunda bir hayvan kayığa katılıyor; ilki mavi gözlü beyaz
+kedi **Ted**.
 
 Yandan görünüş, tek dokunuşla zıplama, beş bölüm. SwiftUI + SpriteKit.
 Harici bağımlılık yok, **görsel dosya yok** — Hira, ayıcığı, kedi, kayık ve
@@ -53,8 +54,10 @@ bir ada var; üstündeki hayvan kayığa atlıyor ve ekranda **"Ted artık macer
 şeridi beliriyor. **Mürettebat büyüdükçe kayık uzuyor.** İlerleme cihazda
 saklanıyor; menüden kaldığın bölümden devam ediyorsun.
 
-Adı olan arkadaşlar `AnimalKind.name` ile tanımlı (şimdilik sadece Ted);
-adı olmayanlar türüyle anılıyor. Yeni bir isim vermek tek satır.
+Mürettebat listesinde ayıcık **Tedi** hep başta duruyor (`Teddy.name`) —
+o bir bölüm ödülü değil, yolculuğun başından beri kayıkta. Arkasından
+bölüm bölüm katılan hayvanlar geliyor. Adı olan arkadaşlar `AnimalKind.name`
+ile tanımlı (şimdilik sadece Ted); adı olmayanlar türüyle anılıyor.
 
 ## Engeller
 

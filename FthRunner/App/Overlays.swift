@@ -107,7 +107,7 @@ struct MenuOverlay: View {
                         .font(.system(size: 46, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                         .shadow(color: Palette.accent.opacity(0.85), radius: 18)
-                    Text("Dokun ve zıpla. Beş bölüm, beş yeni arkadaş.")
+                    Text("Hira, ayıcığı Tedi ve bir kayık.\nBeş bölüm, beş yeni arkadaş.")
                         .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundStyle(.white.opacity(0.75))
                 }
@@ -345,7 +345,8 @@ struct OverlayShell<Content: View>: View {
     }
 }
 
-/// Kayığa katılmış hayvanların listesi.
+/// Kayıktakilerin listesi. Ayıcık Tedi hep başta duruyor; arkasından
+/// bölüm bölüm katılan hayvanlar geliyor.
 struct CrewStrip: View {
     let companions: [AnimalKind]
     let title: String
@@ -358,29 +359,39 @@ struct CrewStrip: View {
                 .foregroundStyle(.white.opacity(0.45))
                 .tracking(1.5)
 
-            if companions.isEmpty {
-                Text("Henüz kimse yok — sadece kız ve ayıcığı")
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.5))
-            } else {
-                FlowRow(spacing: 8) {
-                    ForEach(companions, id: \.self) { animal in
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(Color(animal.swatch))
-                                .frame(width: 9, height: 9)
-                                .overlay(Circle().stroke(.white.opacity(0.6), lineWidth: 0.8))
-                            Text(animal.displayName)
-                                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.white.opacity(0.92))
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Capsule().fill(.white.opacity(0.14)))
-                    }
+            FlowRow(spacing: 8) {
+                CrewChip(name: Teddy.name, tint: Color(Palette.teddy))
+                ForEach(companions, id: \.self) { animal in
+                    CrewChip(name: animal.displayName, tint: Color(animal.swatch))
                 }
             }
+
+            if companions.isEmpty {
+                Text("Ted'i bulmak için 1. bölümü bitir.")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.45))
+            }
         }
+    }
+}
+
+struct CrewChip: View {
+    let name: String
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(tint)
+                .frame(width: 9, height: 9)
+                .overlay(Circle().stroke(.white.opacity(0.6), lineWidth: 0.8))
+            Text(name)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.92))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(.white.opacity(0.14)))
     }
 }
 

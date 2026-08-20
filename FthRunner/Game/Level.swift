@@ -16,6 +16,12 @@ struct SkyTheme {
 }
 
 /// Bölüm sonunda kayığa katılan hayvan.
+/// Hira'nın hiç bırakmadığı ayıcık. Bölüm ödülü değil — yolculuğun başından
+/// beri kayıkta olduğu için mürettebatın sabit üyesi.
+enum Teddy {
+    static let name = "Tedi"
+}
+
 enum AnimalKind: String, CaseIterable {
     case cat, seal, penguin, turtle, puppy
 
