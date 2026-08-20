@@ -183,6 +183,12 @@ struct LevelIntroOverlay: View {
                         .font(.system(size: 19, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                 }
+                // Adı olan arkadaşın türünü de söyleyelim: "Ted · beyaz kedi".
+                if level.reward.name != nil {
+                    Text(level.reward.species.lowercased())
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.55))
+                }
             }
 
             if showControls {
@@ -214,18 +220,18 @@ struct LevelCompleteOverlay: View {
             Spacer()
 
             Text("BÖLÜM \(level.number) TAMAM")
-                .font(.system(size: 26, weight: .black, design: .rounded))
+                .font(.system(size: 12, weight: .heavy, design: .rounded))
                 .foregroundStyle(Palette.accent)
-                .multilineTextAlignment(.center)
+                .tracking(2)
 
             Text(level.reward.greeting)
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .font(.system(size: 30, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 8)
 
             Text("\(score)")
-                .font(.system(size: 56, weight: .black, design: .rounded))
+                .font(.system(size: 50, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
 
             CrewStrip(companions: companions, title: "KAYIKTAKİLER")

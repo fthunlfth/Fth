@@ -1,7 +1,7 @@
 # Hira'nın Macerası — iOS yan kaydırmalı deniz oyunu
 
-Hira, ayıcığıyla birlikte kayığında denizde ilerliyor. Her bölümün sonunda
-bir hayvan kayığa katılıyor; ilki mavi gözlü beyaz kedisi.
+Hira, elinde küçük gri ayıcığıyla kayığında denizde ilerliyor. Her bölümün
+sonunda bir hayvan kayığa katılıyor; ilki mavi gözlü beyaz kedi **Ted**.
 
 Yandan görünüş, tek dokunuşla zıplama, beş bölüm. SwiftUI + SpriteKit.
 Harici bağımlılık yok, **görsel dosya yok** — Hira, ayıcığı, kedi, kayık ve
@@ -42,15 +42,19 @@ canlar bitince bölüm baştan başlar.
 
 | # | Bölüm | Zaman | Yeni engeller | Ödül |
 |---|---|---|---|---|
-| 1 | Sabah Denizi | sabah | kaya, kütük | **Beyaz kedi** (mavi gözlü) |
+| 1 | Sabah Denizi | sabah | kaya, kütük | **Ted** — mavi gözlü beyaz kedi |
 | 2 | Martı Koyu | öğle | martı, denizanası | Yavru fok |
 | 3 | Gün Batımı Sığlığı | gün batımı | köpek balığı yüzgeci | Küçük penguen |
 | 4 | Ay Işığı Geçidi | gece | balık ağı, girdap | Deniz kaplumbağası |
 | 5 | Fırtına Burnu | fırtına | hepsi bir arada | Yavru köpek |
 
 Her bölümün gökyüzü, deniz, bulut ve ada renkleri farklı. Bölüm sonunda küçük
-bir ada var; üstündeki hayvan kayığa atlıyor. **Mürettebat büyüdükçe kayık
-uzuyor.** İlerleme cihazda saklanıyor; menüden kaldığın bölümden devam ediyorsun.
+bir ada var; üstündeki hayvan kayığa atlıyor ve ekranda **"Ted artık macerada!"**
+şeridi beliriyor. **Mürettebat büyüdükçe kayık uzuyor.** İlerleme cihazda
+saklanıyor; menüden kaldığın bölümden devam ediyorsun.
+
+Adı olan arkadaşlar `AnimalKind.name` ile tanımlı (şimdilik sadece Ted);
+adı olmayanlar türüyle anılıyor. Yeni bir isim vermek tek satır.
 
 ## Engeller
 
@@ -96,6 +100,7 @@ FthRunner/
         WhirlpoolNode.swift
   Support/
     Wave.swift                # su yüzeyi matematiği (tek kaynak)
+    Fonts.swift               # sahne etiketleri için yuvarlak sistem fontu
     Palette.swift             # karakter ve engel renkleri
     Haptics.swift             # titreşim
     TextureFactory.swift      # kod ile doku üretimi

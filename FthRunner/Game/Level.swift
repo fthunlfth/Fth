@@ -19,7 +19,8 @@ struct SkyTheme {
 enum AnimalKind: String, CaseIterable {
     case cat, seal, penguin, turtle, puppy
 
-    var displayName: String {
+    /// Hayvanın türü.
+    var species: String {
         switch self {
         case .cat:     return "Beyaz kedi"
         case .seal:    return "Yavru fok"
@@ -29,6 +30,20 @@ enum AnimalKind: String, CaseIterable {
         }
     }
 
+    /// Adı olan arkadaşlar. Adı olmayanlar türüyle anılıyor.
+    var name: String? {
+        switch self {
+        case .cat: return "Ted"
+        default:   return nil
+        }
+    }
+
+    /// Arayüzde görünen ad.
+    var displayName: String { name ?? species }
+
+    /// Kayığa katıldığı anda ekranda beliren cümle.
+    var greeting: String { "\(displayName) artık macerada!" }
+
     /// Arayüzdeki küçük renk noktası.
     var swatch: UIColor {
         switch self {
@@ -37,17 +52,6 @@ enum AnimalKind: String, CaseIterable {
         case .penguin: return Palette.penguinBeak
         case .turtle:  return Palette.turtleShell
         case .puppy:   return Palette.puppyFur
-        }
-    }
-
-    /// Bölüm sonu ekranında görünen tanıtım cümlesi.
-    var greeting: String {
-        switch self {
-        case .cat:     return "Mavi gözlü beyaz kedi kayığa atladı."
-        case .seal:    return "Yavru fok kayığın kıçına yerleşti."
-        case .penguin: return "Küçük penguen paytak paytak bindi."
-        case .turtle:  return "Deniz kaplumbağası ağır ağır tırmandı."
-        case .puppy:   return "Yavru köpek kuyruğunu sallayarak koştu."
         }
     }
 }

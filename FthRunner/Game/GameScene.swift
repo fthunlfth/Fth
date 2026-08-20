@@ -422,8 +422,55 @@ final class GameScene: SKScene {
             guard let self else { return }
             self.boat.addCompanion(reward)
             self.confetti()
-            self.state?.completeLevel()
+            self.showJoinBanner(text: reward.greeting)
+            // Kutlama sahnede bir an nefes alsın, bölüm sonu kartı sonra gelsin.
+            self.run(.sequence([
+                .wait(forDuration: 1.3),
+                .run { self.state?.completeLevel() }
+            ]))
         }
+    }
+
+    /// Yeni arkadaş kayığa bindiği anda üstünde beliren şerit.
+    private func showJoinBanner(text: String) {
+        let banner = SKNode()
+        banner.zPosition = 70
+        banner.position = CGPoint(x: size.width / 2, y: boat.position.y + Tuning.boatHeight * 3.2)
+
+        let label = SKLabelNode(text: text)
+        label.fontName = Fonts.roundedName(size: 26, weight: .heavy)
+        label.fontSize = 26
+        label.fontColor = UIColor.black.withAlphaComponent(0.85)
+        label.verticalAlignmentMode = .center
+        label.horizontalAlignmentMode = .center
+
+        let padding = CGSize(width: 34, height: 18)
+        let plateSize = CGSize(width: label.frame.width + padding.width * 2,
+                               height: label.frame.height + padding.height * 2)
+        let plate = SKShapeNode(rectOf: plateSize, cornerRadius: plateSize.height / 2)
+        plate.fillColor = Palette.lifeVest
+        plate.strokeColor = .white
+        plate.lineWidth = 2.5
+
+        banner.addChild(plate)
+        banner.addChild(label)
+        effectsLayer.addChild(banner)
+
+        // Aşağıdan zıplayarak gelip bir süre durup kayboluyor.
+        banner.setScale(0.4)
+        banner.alpha = 0
+        banner.position.y -= 30
+        banner.run(.sequence([
+            .group([
+                .scale(to: 1.08, duration: 0.22),
+                .fadeIn(withDuration: 0.18),
+                .moveBy(x: 0, y: 30, duration: 0.22)
+            ]),
+            .scale(to: 1.0, duration: 0.1),
+            .wait(forDuration: 1.5),
+            .group([.fadeOut(withDuration: 0.35), .moveBy(x: 0, y: 20, duration: 0.35)]),
+            .removeFromParent()
+        ]))
     }
 
     private func confetti() {

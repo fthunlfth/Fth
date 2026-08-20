@@ -252,8 +252,8 @@ final class BoatNode: SKNode {
         teddy.position = point
         teddy.zPosition = 5
 
-        let bodyRadius = r * 0.34
-        let headRadius = r * 0.26
+        let bodyRadius = r * 0.44
+        let headRadius = r * 0.32
 
         let body = SKShapeNode(circleOfRadius: bodyRadius)
         body.fillColor = Palette.teddy

@@ -333,12 +333,12 @@ final class HiraNode: SKNode {
 
     // MARK: - Ayıcık
 
-    /// Elinde sarkan küçük gri ayıcık.
+    /// Elinde sarkan küçük gri ayıcık — Hira onu hiç bırakmıyor.
     private func buildTeddy() {
         let h = height
-        let scale = h * 0.052
+        let scale = h * 0.072
         let teddy = SKNode()
-        teddy.position = CGPoint(x: -h * 0.108, y: h * 0.415)
+        teddy.position = CGPoint(x: -h * 0.128, y: h * 0.355)
         teddy.zPosition = 6
 
         let bodyRadius = scale * 0.95
