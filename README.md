@@ -36,10 +36,13 @@ yükseğe çıkar (Mario'daki gibi değişken zıplama). Sudan ayrıldıktan son
 bir tolerans (coyote time) ve havadayken erken basılan zıplamayı hatırlayan bir
 tampon var — yani zamanlaman biraz şaşarsa oyun seni affediyor.
 
-Üç canın var. Çarptığında bir can gider ve kısa süre dokunulmaz olursun;
-canlar bitince bölüm baştan başlar.
+**İki canın var.** Çarptığında bir can gider ve kısa süre dokunulmaz olursun;
+ikinci çarpışmada bölümün başına dönersin.
 
 ## Bölümler
+
+Her bölüm **60 saniye**. `Level.duration` saniye cinsinden yazılı; uzunluk
+hızla çarpılarak hesaplanıyor, yani hızı değiştirsen de bölüm aynı sürede bitiyor.
 
 | # | Bölüm | Zaman | Yeni engeller | Ödül |
 |---|---|---|---|---|
@@ -129,10 +132,10 @@ değiştirdiğinde sonuç birebir öngörülebilir oluyor.
 - **Zıplama ağır/hafif** → `gravity`, `jumpImpulse`
 - **Basılı tutma çok/az etkili** → `jumpHoldGravityScale`, `maxJumpHoldTime`
 - **Zamanlama affetmiyor** → `coyoteTime`, `jumpBufferTime` yükselt
-- **Bölüm uzun/kısa** → `Level.all` içindeki `length`
+- **Bölüm uzun/kısa** → `Level.all` içindeki `duration` (saniye)
 - **Bölüm zor/kolay** → `Level.all` içindeki `scrollSpeed` ve `gapRange`
 - **Engeller çok sık** → `gapRange` aralığını genişlet
-- **Çok çabuk ölüyorum** → `Tuning.livesPerLevel`, `invulnerabilityTime`
+- **Çok çabuk ölüyorum** → `Tuning.livesPerLevel` (şu an 2), `invulnerabilityTime`
 - **Deniz çok/az dalgalı** → `waveAmplitude`, `waveLength`
 
 Hira'nın görünümü `Support/Palette.swift` renkleriyle değişiyor. Kayıktaki

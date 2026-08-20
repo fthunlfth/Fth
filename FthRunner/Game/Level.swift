@@ -84,8 +84,9 @@ enum ObstacleKind: CaseIterable {
 struct Level {
     let index: Int
     let title: String
-    /// Bölümün uzunluğu (dünya noktası).
-    let length: CGFloat
+    /// Bölümün hedef süresi (saniye). Uzunluk bundan hesaplanıyor,
+    /// böylece hız değişse de bölüm aynı sürede bitiyor.
+    let duration: TimeInterval
     let scrollSpeed: CGFloat
     /// Ardışık engeller arası mesafe aralığı. Daraldıkça bölüm zorlaşır.
     let gapRange: ClosedRange<CGFloat>
@@ -95,12 +96,15 @@ struct Level {
 
     var number: Int { index + 1 }
 
+    /// Bölümün uzunluğu (dünya noktası).
+    var length: CGFloat { scrollSpeed * CGFloat(duration) }
+
     // MARK: - Bölümler
 
     static let all: [Level] = [
         Level(index: 0,
               title: "Sabah Denizi",
-              length: 9000,
+              duration: 60,
               scrollSpeed: 300,
               gapRange: 380...560,
               kinds: [.rock, .rock, .driftwood],
@@ -109,7 +113,7 @@ struct Level {
 
         Level(index: 1,
               title: "Martı Koyu",
-              length: 11000,
+              duration: 60,
               scrollSpeed: 335,
               gapRange: 330...500,
               kinds: [.rock, .driftwood, .seagull, .jellyfish],
@@ -118,7 +122,7 @@ struct Level {
 
         Level(index: 2,
               title: "Gün Batımı Sığlığı",
-              length: 13000,
+              duration: 60,
               scrollSpeed: 370,
               gapRange: 300...450,
               kinds: [.rock, .driftwood, .sharkFin, .seagull, .jellyfish],
@@ -127,7 +131,7 @@ struct Level {
 
         Level(index: 3,
               title: "Ay Işığı Geçidi",
-              length: 15000,
+              duration: 60,
               scrollSpeed: 405,
               gapRange: 280...420,
               kinds: [.rock, .sharkFin, .seagull, .net, .whirlpool],
@@ -136,7 +140,7 @@ struct Level {
 
         Level(index: 4,
               title: "Fırtına Burnu",
-              length: 17000,
+              duration: 60,
               scrollSpeed: 445,
               gapRange: 250...380,
               kinds: ObstacleKind.allCases,

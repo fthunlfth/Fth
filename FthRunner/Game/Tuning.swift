@@ -43,7 +43,8 @@ enum Tuning {
     static let waveSpeed2: CGFloat = 2.3
 
     // MARK: - Can
-    static let livesPerLevel = 3
+    /// Bu kadar çarpışmadan sonra bölüm baştan başlıyor.
+    static let livesPerLevel = 2
     /// Yedikten sonra dokunulmazlık süresi.
     static let invulnerabilityTime: TimeInterval = 1.5
 

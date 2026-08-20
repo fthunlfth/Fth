@@ -307,6 +307,10 @@ struct GameOverOverlay: View {
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white.opacity(0.6))
 
+            Text("Bölümün başına dönüyorsun.")
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.45))
+
             Text("\(score)")
                 .font(.system(size: 72, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
@@ -316,7 +320,7 @@ struct GameOverOverlay: View {
             Spacer()
 
             VStack(spacing: 12) {
-                PrimaryButton(title: "TEKRAR DENE", tint: Palette.accent, action: onRetry)
+                PrimaryButton(title: "BÖLÜM BAŞINA DÖN", tint: Palette.accent, action: onRetry)
                 SecondaryButton(title: "MENÜ", action: onMenu)
             }
         }
