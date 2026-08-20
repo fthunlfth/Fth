@@ -107,7 +107,7 @@ struct Level {
               duration: 60,
               scrollSpeed: 300,
               gapRange: 380...560,
-              kinds: [.rock, .rock, .driftwood],
+              kinds: [.rock, .rock, .driftwood, .jellyfish],
               sky: .morning,
               reward: .cat),
 

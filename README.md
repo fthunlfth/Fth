@@ -46,8 +46,8 @@ hızla çarpılarak hesaplanıyor, yani hızı değiştirsen de bölüm aynı s�
 
 | # | Bölüm | Zaman | Yeni engeller | Ödül |
 |---|---|---|---|---|
-| 1 | Sabah Denizi | sabah | kaya, kütük | **Ted** — mavi gözlü beyaz kedi |
-| 2 | Martı Koyu | öğle | martı, denizanası | Yavru fok |
+| 1 | Sabah Denizi | sabah | kaya, kütük, denizanası | **Ted** — mavi gözlü beyaz kedi |
+| 2 | Martı Koyu | öğle | martı | Yavru fok |
 | 3 | Gün Batımı Sığlığı | gün batımı | köpek balığı yüzgeci | Küçük penguen |
 | 4 | Ay Işığı Geçidi | gece | balık ağı, girdap | Deniz kaplumbağası |
 | 5 | Fırtına Burnu | fırtına | hepsi bir arada | Yavru köpek |
