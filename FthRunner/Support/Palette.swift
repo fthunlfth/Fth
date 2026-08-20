@@ -9,13 +9,26 @@ enum Palette {
     static let hullLight   = UIColor(red: 0.80, green: 0.56, blue: 0.33, alpha: 1)
     static let hullDark    = UIColor(red: 0.34, green: 0.19, blue: 0.09, alpha: 1)
 
-    // MARK: - Kız
-    static let skin        = UIColor(red: 1.00, green: 0.84, blue: 0.72, alpha: 1)
-    static let skinShade   = UIColor(red: 0.92, green: 0.72, blue: 0.60, alpha: 1)
-    static let hair        = UIColor(red: 0.42, green: 0.26, blue: 0.14, alpha: 1)
-    static let hairShine   = UIColor(red: 0.56, green: 0.37, blue: 0.21, alpha: 1)
-    static let dress       = UIColor(red: 0.98, green: 0.45, blue: 0.55, alpha: 1)
+    // MARK: - Hira
+    static let skin        = UIColor(red: 0.94, green: 0.79, blue: 0.65, alpha: 1)
+    static let skinShade   = UIColor(red: 0.86, green: 0.68, blue: 0.53, alpha: 1)
+    static let blush       = UIColor(red: 0.95, green: 0.62, blue: 0.56, alpha: 1)
+    static let hair        = UIColor(red: 0.23, green: 0.17, blue: 0.13, alpha: 1)
+    static let hairShine   = UIColor(red: 0.36, green: 0.27, blue: 0.21, alpha: 1)
+    static let eyeBrown    = UIColor(red: 0.42, green: 0.29, blue: 0.18, alpha: 1)
+    /// Püsküllü beyaz askılı üst.
+    static let top         = UIColor(red: 0.98, green: 0.98, blue: 0.97, alpha: 1)
+    static let topShade    = UIColor(red: 0.87, green: 0.87, blue: 0.84, alpha: 1)
+    static let topMotif    = UIColor(red: 0.50, green: 0.78, blue: 0.91, alpha: 1)
+    /// Fıstık yeşili şort.
+    static let shorts      = UIColor(red: 0.84, green: 0.92, blue: 0.29, alpha: 1)
+    static let shortsShade = UIColor(red: 0.72, green: 0.80, blue: 0.20, alpha: 1)
+    static let sockStripe  = UIColor(red: 0.14, green: 0.15, blue: 0.18, alpha: 1)
+    /// Sarı terlik.
+    static let clog        = UIColor(red: 0.96, green: 0.88, blue: 0.13, alpha: 1)
+    static let clogShade   = UIColor(red: 0.80, green: 0.72, blue: 0.06, alpha: 1)
     static let lifeVest    = UIColor(red: 1.00, green: 0.68, blue: 0.20, alpha: 1)
+    static let sand        = UIColor(red: 0.93, green: 0.86, blue: 0.68, alpha: 1)
 
     // MARK: - Ayıcık
     static let teddy       = UIColor(red: 0.66, green: 0.66, blue: 0.69, alpha: 1)

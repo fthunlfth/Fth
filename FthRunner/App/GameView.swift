@@ -120,7 +120,7 @@ struct GameView: View {
     private func backToMenu() {
         Haptics.tap()
         state.returnToMenu()
-        scene?.resetToIdle()
+        scene?.showMenu()
     }
 }
 

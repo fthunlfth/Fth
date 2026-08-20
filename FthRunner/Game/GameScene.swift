@@ -12,7 +12,9 @@ final class GameScene: SKScene {
     private let sky = SkyNode()
     private let sea = SeaNode()
     private let worldLayer = SKNode()
+    private let titleLayer = SKNode()
     private let effectsLayer = SKNode()
+    private let titleScene = TitleSceneNode()
 
     // MARK: - Oyun nesneleri
     private var boat: BoatNode!
@@ -55,11 +57,14 @@ final class GameScene: SKScene {
         sky.zPosition = 0
         sea.zPosition = 10
         worldLayer.zPosition = 20
+        titleLayer.zPosition = 24
         effectsLayer.zPosition = 40
         addChild(sky)
         addChild(sea)
         addChild(worldLayer)
+        addChild(titleLayer)
         addChild(effectsLayer)
+        titleLayer.addChild(titleScene)
 
         boat = BoatNode(length: Tuning.boatLength, height: Tuning.boatHeight)
         boat.zPosition = 25
@@ -67,6 +72,8 @@ final class GameScene: SKScene {
         boat.setWakeTarget(worldLayer)
 
         applyTheme()
+        buildTitleScene()
+        showTitle(true)
         resetToIdle()
     }
 
@@ -74,12 +81,35 @@ final class GameScene: SKScene {
         super.didChangeSize(oldSize)
         guard size.width > 0, sky.parent != nil else { return }
         applyTheme()
+        buildTitleScene()
     }
 
     private func applyTheme() {
         sky.build(size: size, waterLine: waterLine, theme: level.sky)
         sea.build(size: size, waterLine: waterLine, theme: level.sky)
         backgroundColor = level.sky.skyTop
+    }
+
+    // MARK: - Açılış tablosu
+
+    private func buildTitleScene() {
+        let characterHeight = min(size.height * 0.46, 210)
+        titleScene.build(characterHeight: characterHeight)
+        titleScene.position = CGPoint(x: size.width * 0.73, y: waterLine + 4)
+    }
+
+    /// Menüde Hira kumsalda duruyor; oynarken yerini kayığa bırakıyor.
+    func showTitle(_ show: Bool) {
+        titleLayer.isHidden = !show
+        boat.isHidden = show
+    }
+
+    /// Menüye dönüş: ilk bölümün sabahına geri sar ve tabloyu göster.
+    func showMenu() {
+        level = Level.level(at: 0)
+        applyTheme()
+        resetToIdle()
+        showTitle(true)
     }
 
     // MARK: - Bölüm yönetimi
@@ -115,6 +145,7 @@ final class GameScene: SKScene {
         level = Level.level(at: index)
         applyTheme()
         resetToIdle()
+        showTitle(false)
     }
 
     /// Bölüm kartından oynamaya geçiş.
@@ -396,7 +427,7 @@ final class GameScene: SKScene {
     }
 
     private func confetti() {
-        let colors: [UIColor] = [Palette.lifeVest, Palette.dress, Palette.starfish, Palette.foam, Palette.palm]
+        let colors: [UIColor] = [Palette.lifeVest, Palette.shorts, Palette.starfish, Palette.foam, Palette.palm]
         for color in colors {
             let emitter = SKEmitterNode()
             emitter.particleTexture = TextureFactory.softCircle(diameter: 20, color: color)

@@ -1,11 +1,15 @@
-# Kayık — iOS yan kaydırmalı deniz oyunu
+# Hira'nın Macerası — iOS yan kaydırmalı deniz oyunu
 
-Kahverengi kâkküllü saçlı, kucağında küçük gri ayıcık tutan bir kız çocuğu,
-kayığıyla denizde ilerliyor. Her bölümün sonunda bir hayvan kayığa katılıyor.
+Hira, ayıcığıyla birlikte kayığında denizde ilerliyor. Her bölümün sonunda
+bir hayvan kayığa katılıyor; ilki mavi gözlü beyaz kedisi.
 
 Yandan görünüş, tek dokunuşla zıplama, beş bölüm. SwiftUI + SpriteKit.
-Harici bağımlılık yok, görsel dosya yok — kayık, kız, ayıcık, hayvanlar ve
-bütün engeller kod ile çiziliyor, proje klonlar klonlamaz çalışır.
+Harici bağımlılık yok, **görsel dosya yok** — Hira, ayıcığı, kedi, kayık ve
+bütün engeller Swift içinde vektör şekillerle çiziliyor, proje klonlar
+klonlamaz çalışır.
+
+Açılış ekranında Hira kumsalda duruyor: elinde küçük gri ayıcığı, yanında
+mavi gözlü beyaz kedisi.
 
 ## Çalıştırma
 
@@ -77,7 +81,9 @@ FthRunner/
     GameState.swift           # skor, can, ilerleme, kayıt
     GameScene.swift           # oyun döngüsü, zıplama fiziği, üretim, çarpışma
     Nodes/
-      BoatNode.swift          # kayık + kız + ayıcık + mürettebat
+      BoatNode.swift          # kayık + Hira + ayıcık + mürettebat
+      HiraNode.swift          # açılış ekranındaki ayakta duran Hira
+      TitleSceneNode.swift    # kumsal + Hira + mavi gözlü beyaz kedi
       AnimalNode.swift        # kedi, fok, penguen, kaplumbağa, köpek
       SkyNode.swift           # gök, güneş/ay, yıldız, bulut, uzak ada, yağmur
       SeaNode.swift           # dalgalanan su yüzeyi, derinlik, köpük
@@ -121,8 +127,9 @@ değiştirdiğinde sonuç birebir öngörülebilir oluyor.
 - **Çok çabuk ölüyorum** → `Tuning.livesPerLevel`, `invulnerabilityTime`
 - **Deniz çok/az dalgalı** → `waveAmplitude`, `waveLength`
 
-Kızın görünümü `Support/Palette.swift` renkleriyle ve `BoatNode.swift`
-içindeki `buildGirl` / `buildTeddy` / `buildHead` fonksiyonlarıyla değişiyor.
+Hira'nın görünümü `Support/Palette.swift` renkleriyle değişiyor. Kayıktaki
+hâli `BoatNode.swift` içindeki `buildOutfit` / `buildHead` / `buildDanglingLeg`
+fonksiyonlarında; açılış ekranındaki ayakta duran hâli `HiraNode.swift` içinde.
 Hayvanlar `AnimalNode.swift` içinde, her biri kendi `build...` fonksiyonunda.
 
 ## Yol haritası (fikir havuzu)

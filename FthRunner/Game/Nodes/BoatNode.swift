@@ -109,7 +109,7 @@ final class BoatNode: SKNode {
         flag.addLine(to: CGPoint(x: -height * 0.34, y: -height * 0.14))
         flag.closeSubpath()
         let flagNode = SKShapeNode(path: flag)
-        flagNode.fillColor = Palette.dress
+        flagNode.fillColor = Palette.shorts
         flagNode.strokeColor = Palette.hullDark
         flagNode.lineWidth = 1
         flagNode.position = CGPoint(x: halfL - height * 0.21, y: height * 1.28)
@@ -120,7 +120,7 @@ final class BoatNode: SKNode {
         ])))
     }
 
-    // MARK: - Kız ve ayıcık
+    // MARK: - Hira ve ayıcık
 
     private func buildGirl() {
         girl.removeAllChildren()
@@ -129,25 +129,13 @@ final class BoatNode: SKNode {
         let bodyX = -height * 0.05
         girl.position = CGPoint(x: length * 0.06, y: 0)
 
-        // Gövde ve can yeleği.
-        let torso = SKShapeNode(ellipseOf: CGSize(width: r * 1.5, height: r * 1.7))
-        torso.fillColor = Palette.dress
-        torso.strokeColor = Palette.hullDark
-        torso.lineWidth = 1
-        torso.position = CGPoint(x: bodyX, y: seatY + r * 0.55)
-        girl.addChild(torso)
-
-        let vest = SKShapeNode(rectOf: CGSize(width: r * 1.35, height: r * 1.05), cornerRadius: r * 0.3)
-        vest.fillColor = Palette.lifeVest
-        vest.strokeColor = Palette.hullDark
-        vest.lineWidth = 1
-        vest.position = CGPoint(x: bodyX, y: seatY + r * 0.55)
-        girl.addChild(vest)
+        buildDanglingLeg(hip: CGPoint(x: bodyX + r * 0.35, y: seatY + r * 0.1), scale: r)
+        buildOutfit(at: CGPoint(x: bodyX, y: seatY + r * 0.55), scale: r)
 
         // Öne uzanan kol — ayıcığı tutuyor.
         let arm = SKShapeNode(ellipseOf: CGSize(width: r * 0.85, height: r * 0.36))
         arm.fillColor = Palette.skin
-        arm.strokeColor = Palette.hullDark
+        arm.strokeColor = Palette.skinShade
         arm.lineWidth = 0.8
         arm.position = CGPoint(x: bodyX + r * 0.72, y: seatY + r * 0.42)
         arm.zRotation = -0.18
@@ -158,10 +146,111 @@ final class BoatNode: SKNode {
         buildHead(at: CGPoint(x: bodyX + r * 0.10, y: seatY + r * 1.85), radius: r)
     }
 
+    /// Fıstık yeşili şort, püsküllü beyaz üst ve üstündeki can yeleği bandı.
+    private func buildOutfit(at point: CGPoint, scale r: CGFloat) {
+        // Şort — oturağın hizasında, üstün altından görünüyor.
+        let shorts = SKShapeNode(rectOf: CGSize(width: r * 1.45, height: r * 0.75), cornerRadius: r * 0.22)
+        shorts.fillColor = Palette.shorts
+        shorts.strokeColor = Palette.shortsShade
+        shorts.lineWidth = 1
+        shorts.position = CGPoint(x: point.x, y: point.y - r * 0.62)
+        shorts.zPosition = 1
+        girl.addChild(shorts)
+
+        // Beyaz askılı üst.
+        let top = SKShapeNode(ellipseOf: CGSize(width: r * 1.5, height: r * 1.55))
+        top.fillColor = Palette.top
+        top.strokeColor = Palette.topShade
+        top.lineWidth = 1
+        top.position = point
+        top.zPosition = 2
+        girl.addChild(top)
+
+        // Etek ucundaki püskül — fotoğraftaki ayırt edici detay.
+        for index in 0..<5 {
+            let t = CGFloat(index) / 4
+            let strand = SKShapeNode(rectOf: CGSize(width: r * 0.10, height: r * 0.34),
+                                     cornerRadius: r * 0.05)
+            strand.fillColor = Palette.top
+            strand.strokeColor = Palette.topShade
+            strand.lineWidth = 0.4
+            strand.position = CGPoint(x: point.x - r * 0.52 + t * r * 1.04, y: point.y - r * 0.78)
+            strand.zPosition = 2
+            girl.addChild(strand)
+        }
+
+        // Can yeleği: dar bir bant, altındaki beyaz üst görünsün diye.
+        let vest = SKShapeNode(rectOf: CGSize(width: r * 1.35, height: r * 0.62), cornerRadius: r * 0.2)
+        vest.fillColor = Palette.lifeVest
+        vest.strokeColor = Palette.hullDark
+        vest.lineWidth = 1
+        vest.position = CGPoint(x: point.x, y: point.y + r * 0.08)
+        vest.zPosition = 3
+        girl.addChild(vest)
+
+        let strap = SKShapeNode(rectOf: CGSize(width: r * 0.22, height: r * 0.85), cornerRadius: r * 0.11)
+        strap.fillColor = Palette.lifeVest
+        strap.strokeColor = .clear
+        strap.position = CGPoint(x: point.x - r * 0.12, y: point.y + r * 0.5)
+        strap.zRotation = 0.12
+        strap.zPosition = 3
+        girl.addChild(strap)
+    }
+
+    /// Kayığın kenarından suya sarkan bacak: çizgili çorap ve sarı terlik.
+    private func buildDanglingLeg(hip: CGPoint, scale r: CGFloat) {
+        let leg = SKNode()
+        leg.zPosition = 4
+
+        let thigh = SKShapeNode(rectOf: CGSize(width: r * 0.95, height: r * 0.40), cornerRadius: r * 0.2)
+        thigh.fillColor = Palette.skin
+        thigh.strokeColor = Palette.skinShade
+        thigh.lineWidth = 0.8
+        thigh.position = CGPoint(x: hip.x + r * 0.42, y: hip.y - r * 0.18)
+        leg.addChild(thigh)
+
+        let shin = SKShapeNode(rectOf: CGSize(width: r * 0.36, height: r * 0.80), cornerRadius: r * 0.18)
+        shin.fillColor = Palette.skin
+        shin.strokeColor = Palette.skinShade
+        shin.lineWidth = 0.8
+        shin.position = CGPoint(x: hip.x + r * 0.86, y: hip.y - r * 0.62)
+        leg.addChild(shin)
+
+        let sock = SKShapeNode(rectOf: CGSize(width: r * 0.40, height: r * 0.42), cornerRadius: r * 0.16)
+        sock.fillColor = .white
+        sock.strokeColor = Palette.topShade
+        sock.lineWidth = 0.6
+        sock.position = CGPoint(x: hip.x + r * 0.88, y: hip.y - r * 1.10)
+        leg.addChild(sock)
+
+        let stripe = SKShapeNode(rectOf: CGSize(width: r * 0.40, height: r * 0.09))
+        stripe.fillColor = Palette.sockStripe
+        stripe.strokeColor = .clear
+        stripe.position = CGPoint(x: hip.x + r * 0.88, y: hip.y - r * 1.02)
+        leg.addChild(stripe)
+
+        let clog = SKShapeNode(rectOf: CGSize(width: r * 0.62, height: r * 0.34), cornerRadius: r * 0.15)
+        clog.fillColor = Palette.clog
+        clog.strokeColor = Palette.clogShade
+        clog.lineWidth = 0.8
+        clog.position = CGPoint(x: hip.x + r * 0.96, y: hip.y - r * 1.38)
+        leg.addChild(clog)
+
+        girl.addChild(leg)
+
+        // Suya değdikçe hafifçe sallanıyor.
+        let swing = SKAction.sequence([
+            .rotate(toAngle: 0.07, duration: 0.9),
+            .rotate(toAngle: -0.05, duration: 0.9)
+        ])
+        swing.timingMode = .easeInEaseOut
+        leg.run(.repeatForever(swing))
+    }
+
     private func buildTeddy(at point: CGPoint, scale r: CGFloat) {
         let teddy = SKNode()
         teddy.position = point
-        teddy.zPosition = 2
+        teddy.zPosition = 5
 
         let bodyRadius = r * 0.34
         let headRadius = r * 0.26
@@ -199,13 +288,34 @@ final class BoatNode: SKNode {
     private func buildHead(at point: CGPoint, radius r: CGFloat) {
         let head = SKNode()
         head.position = point
-        head.zPosition = 4
+        head.zPosition = 6
 
-        // Arkaya dökülen saç.
-        let backHair = SKShapeNode(ellipseOf: CGSize(width: r * 1.85, height: r * 2.3))
+        // Arkada toplanmış at kuyruğu.
+        let tail = CGMutablePath()
+        tail.move(to: CGPoint(x: -r * 0.75, y: -r * 0.05))
+        tail.addQuadCurve(to: CGPoint(x: -r * 1.45, y: -r * 1.35),
+                          control: CGPoint(x: -r * 1.70, y: -r * 0.45))
+        tail.addQuadCurve(to: CGPoint(x: -r * 0.62, y: -r * 0.30),
+                          control: CGPoint(x: -r * 0.95, y: -r * 0.85))
+        tail.closeSubpath()
+        let tailNode = SKShapeNode(path: tail)
+        tailNode.fillColor = Palette.hair
+        tailNode.strokeColor = .clear
+        tailNode.zPosition = -1
+        head.addChild(tailNode)
+
+        let tie = SKShapeNode(circleOfRadius: r * 0.14)
+        tie.fillColor = Palette.shorts
+        tie.strokeColor = Palette.shortsShade
+        tie.lineWidth = 0.6
+        tie.position = CGPoint(x: -r * 0.72, y: -r * 0.16)
+        head.addChild(tie)
+
+        // Saçın arka kütlesi.
+        let backHair = SKShapeNode(ellipseOf: CGSize(width: r * 1.9, height: r * 2.1))
         backHair.fillColor = Palette.hair
         backHair.strokeColor = .clear
-        backHair.position = CGPoint(x: -r * 0.28, y: -r * 0.42)
+        backHair.position = CGPoint(x: -r * 0.22, y: r * 0.06)
         head.addChild(backHair)
 
         // Yüz.
@@ -214,7 +324,7 @@ final class BoatNode: SKNode {
         face.strokeColor = .clear
         head.addChild(face)
 
-        // Kâkül: alnın üstünü kaplayıp öne doğru inen perçem.
+        // Kâkül: alnı kapatıp öne inen perçem.
         let bangs = CGMutablePath()
         bangs.move(to: CGPoint(x: -r * 1.02, y: r * 0.05))
         bangs.addQuadCurve(to: CGPoint(x: r * 0.92, y: r * 0.30),
@@ -235,26 +345,38 @@ final class BoatNode: SKNode {
         head.addChild(shine)
 
         // Yandan tek göz.
-        let eye = SKShapeNode(circleOfRadius: r * 0.11)
-        eye.fillColor = Palette.hullDark
-        eye.strokeColor = .clear
-        eye.position = CGPoint(x: r * 0.42, y: -r * 0.02)
-        head.addChild(eye)
+        let eyeWhite = SKShapeNode(ellipseOf: CGSize(width: r * 0.34, height: r * 0.36))
+        eyeWhite.fillColor = .white
+        eyeWhite.strokeColor = .clear
+        eyeWhite.position = CGPoint(x: r * 0.44, y: -r * 0.02)
+        head.addChild(eyeWhite)
+
+        let iris = SKShapeNode(circleOfRadius: r * 0.13)
+        iris.fillColor = Palette.eyeBrown
+        iris.strokeColor = .clear
+        iris.position = CGPoint(x: r * 0.47, y: -r * 0.02)
+        head.addChild(iris)
+
+        let pupil = SKShapeNode(circleOfRadius: r * 0.07)
+        pupil.fillColor = Palette.hair
+        pupil.strokeColor = .clear
+        pupil.position = iris.position
+        head.addChild(pupil)
 
         // Yanak ve gülümseme.
         let cheek = SKShapeNode(ellipseOf: CGSize(width: r * 0.3, height: r * 0.18))
-        cheek.fillColor = Palette.skinShade
+        cheek.fillColor = Palette.blush
         cheek.strokeColor = .clear
-        cheek.alpha = 0.7
-        cheek.position = CGPoint(x: r * 0.30, y: -r * 0.32)
+        cheek.alpha = 0.55
+        cheek.position = CGPoint(x: r * 0.32, y: -r * 0.34)
         head.addChild(cheek)
 
         let smile = CGMutablePath()
-        smile.move(to: CGPoint(x: r * 0.52, y: -r * 0.40))
-        smile.addQuadCurve(to: CGPoint(x: r * 0.82, y: -r * 0.34),
-                           control: CGPoint(x: r * 0.70, y: -r * 0.52))
+        smile.move(to: CGPoint(x: r * 0.52, y: -r * 0.42))
+        smile.addQuadCurve(to: CGPoint(x: r * 0.82, y: -r * 0.36),
+                           control: CGPoint(x: r * 0.70, y: -r * 0.54))
         let smileNode = SKShapeNode(path: smile)
-        smileNode.strokeColor = Palette.hullDark
+        smileNode.strokeColor = Palette.hair
         smileNode.lineWidth = r * 0.09
         smileNode.lineCap = .round
         head.addChild(smileNode)

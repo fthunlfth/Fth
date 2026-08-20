@@ -98,37 +98,52 @@ struct MenuOverlay: View {
     let onRestart: () -> Void
 
     var body: some View {
-        OverlayShell {
-            VStack(spacing: 10) {
-                Text("KAYIK")
-                    .font(.system(size: 60, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                    .shadow(color: Palette.accent.opacity(0.8), radius: 20)
-                Text("Dokun ve zıpla. Beş bölüm, beş yeni arkadaş.")
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-            }
+        HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 16) {
+                Spacer(minLength: 0)
 
-            if best > 0 {
-                Text("REKOR  \(best)")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(Palette.gold)
-            }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("HİRA'NIN\nMACERASI")
+                        .font(.system(size: 46, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .shadow(color: Palette.accent.opacity(0.85), radius: 18)
+                    Text("Dokun ve zıpla. Beş bölüm, beş yeni arkadaş.")
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.75))
+                }
 
-            CrewStrip(companions: companions, title: "MÜRETTEBAT")
+                if best > 0 {
+                    Text("REKOR  \(best)")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundStyle(Palette.gold)
+                }
 
-            Spacer()
+                CrewStrip(companions: companions, title: "MÜRETTEBAT", alignment: .leading)
 
-            VStack(spacing: 12) {
-                PrimaryButton(title: hasProgress ? "DEVAM ET — BÖLÜM \(resumeLevel + 1)" : "BAŞLA",
-                              tint: Palette.accent,
-                              action: onContinue)
-                if hasProgress {
-                    SecondaryButton(title: "BAŞTAN BAŞLA", action: onRestart)
+                Spacer(minLength: 0)
+
+                VStack(spacing: 10) {
+                    PrimaryButton(title: hasProgress ? "DEVAM ET — BÖLÜM \(resumeLevel + 1)" : "BAŞLA",
+                                  tint: Palette.accent,
+                                  action: onContinue)
+                    if hasProgress {
+                        SecondaryButton(title: "BAŞTAN BAŞLA", action: onRestart)
+                    }
                 }
             }
+            .frame(maxWidth: 420, alignment: .leading)
+            .padding(.horizontal, 40)
+            .padding(.vertical, 28)
+
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Sağ tarafı açık bırakıyoruz: Hira, ayıcığı ve kedisi orada duruyor.
+        .background(
+            LinearGradient(colors: [.black.opacity(0.6), .black.opacity(0.05)],
+                           startPoint: .leading, endPoint: .trailing)
+                .ignoresSafeArea()
+        )
     }
 }
 
@@ -328,9 +343,10 @@ struct OverlayShell<Content: View>: View {
 struct CrewStrip: View {
     let companions: [AnimalKind]
     let title: String
+    var alignment: HorizontalAlignment = .center
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: alignment, spacing: 8) {
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
                 .foregroundStyle(.white.opacity(0.45))
