@@ -24,6 +24,7 @@ enum Teddy {
 
 enum AnimalKind: String, CaseIterable {
     case cat, seal, penguin, turtle, puppy
+    case owl, crab, arcticFox, octopus, otter
 
     /// Hayvanın türü.
     var species: String {
@@ -32,7 +33,12 @@ enum AnimalKind: String, CaseIterable {
         case .seal:    return "Yavru fok"
         case .penguin: return "Küçük penguen"
         case .turtle:  return "Deniz kaplumbağası"
-        case .puppy:   return "Yavru köpek"
+        case .puppy:     return "Yavru köpek"
+        case .owl:       return "Baykuş"
+        case .crab:      return "Yengeç"
+        case .arcticFox: return "Kutup tilkisi"
+        case .octopus:   return "Yavru ahtapot"
+        case .otter:     return "Su samuru"
         }
     }
 
@@ -57,7 +63,12 @@ enum AnimalKind: String, CaseIterable {
         case .seal:    return Palette.sealFur
         case .penguin: return Palette.penguinBeak
         case .turtle:  return Palette.turtleShell
-        case .puppy:   return Palette.puppyFur
+        case .puppy:     return Palette.puppyFur
+        case .owl:       return Palette.owlFeather
+        case .crab:      return Palette.crabShell
+        case .arcticFox: return Palette.foxFur
+        case .octopus:   return Palette.octopus
+        case .otter:     return Palette.otterFur
         }
     }
 }
@@ -78,6 +89,12 @@ enum ObstacleKind: CaseIterable {
     case seagull
     /// Yüzeydeki girdap — geniş ve alçak, uzun bir zıplama ister.
     case whirlpool
+    /// Buzdağı: çok yüksek, tam zamanında ve basılı tutarak zıplamak gerek.
+    case iceberg
+    /// Deniz mayını: aşağı yukarı zıplayarak süzülüyor, yüksekliği kestirilmiyor.
+    case seaMine
+    /// Uçan balık: sudan fırlayıp yay çizerek kayığa doğru geliyor.
+    case flyingFish
 }
 
 /// Bir bölümün tarifi.
@@ -143,9 +160,54 @@ struct Level {
               duration: 60,
               scrollSpeed: 445,
               gapRange: 250...380,
-              kinds: ObstacleKind.allCases,
+              kinds: [.rock, .driftwood, .sharkFin, .jellyfish, .net, .seagull, .whirlpool],
               sky: .storm,
-              reward: .puppy)
+              reward: .puppy),
+
+        Level(index: 5,
+              title: "Sisli Geçit",
+              duration: 60,
+              scrollSpeed: 465,
+              gapRange: 250...380,
+              kinds: [.rock, .driftwood, .sharkFin, .seagull, .jellyfish, .seaMine],
+              sky: .fog,
+              reward: .owl),
+
+        Level(index: 6,
+              title: "Mercan Sığlığı",
+              duration: 60,
+              scrollSpeed: 480,
+              gapRange: 245...370,
+              kinds: [.rock, .driftwood, .jellyfish, .seagull, .whirlpool, .flyingFish],
+              sky: .coral,
+              reward: .crab),
+
+        Level(index: 7,
+              title: "Buz Denizi",
+              duration: 60,
+              scrollSpeed: 500,
+              gapRange: 240...360,
+              kinds: [.iceberg, .rock, .driftwood, .sharkFin, .seagull, .seaMine],
+              sky: .ice,
+              reward: .arcticFox),
+
+        Level(index: 8,
+              title: "Kuzey Işıkları",
+              duration: 60,
+              scrollSpeed: 520,
+              gapRange: 235...350,
+              kinds: [.iceberg, .seaMine, .flyingFish, .net, .whirlpool, .seagull, .jellyfish],
+              sky: .aurora,
+              reward: .octopus),
+
+        Level(index: 9,
+              title: "Şafak Dönüşü",
+              duration: 60,
+              scrollSpeed: 540,
+              gapRange: 230...345,
+              kinds: ObstacleKind.allCases,
+              sky: .dawn,
+              reward: .otter)
     ]
 
     static func level(at index: Int) -> Level {
@@ -216,4 +278,70 @@ extension SkyTheme {
         farIsland: UIColor(red: 0.14, green: 0.18, blue: 0.22, alpha: 1),
         hasStars: false,
         hasRain: true)
+
+    /// Sis: alçak kontrast, solmuş renkler, güneş perdenin ardında.
+    static let fog = SkyTheme(
+        skyTop: UIColor(red: 0.66, green: 0.71, blue: 0.72, alpha: 1),
+        skyBottom: UIColor(red: 0.82, green: 0.85, blue: 0.83, alpha: 1),
+        seaSurface: UIColor(red: 0.48, green: 0.57, blue: 0.61, alpha: 1),
+        seaDeep: UIColor(red: 0.20, green: 0.27, blue: 0.31, alpha: 1),
+        orb: UIColor(red: 0.91, green: 0.92, blue: 0.89, alpha: 1),
+        orbIsMoon: false,
+        cloud: UIColor(red: 0.77, green: 0.80, blue: 0.79, alpha: 1),
+        farIsland: UIColor(red: 0.54, green: 0.60, blue: 0.61, alpha: 1),
+        hasStars: false,
+        hasRain: false)
+
+    /// Mercan sığlığı: fırtınadan sonra gelen parlak, renkli bir nefes.
+    static let coral = SkyTheme(
+        skyTop: UIColor(red: 0.21, green: 0.71, blue: 0.84, alpha: 1),
+        skyBottom: UIColor(red: 0.74, green: 0.92, blue: 0.95, alpha: 1),
+        seaSurface: UIColor(red: 0.18, green: 0.79, blue: 0.76, alpha: 1),
+        seaDeep: UIColor(red: 0.04, green: 0.43, blue: 0.50, alpha: 1),
+        orb: UIColor(red: 1.00, green: 0.97, blue: 0.80, alpha: 1),
+        orbIsMoon: false,
+        cloud: UIColor(white: 1.0, alpha: 1),
+        farIsland: UIColor(red: 0.24, green: 0.55, blue: 0.48, alpha: 1),
+        hasStars: false,
+        hasRain: false)
+
+    /// Buz denizi: alçak güneş, soğuk mavi, ufukta buz kütleleri.
+    static let ice = SkyTheme(
+        skyTop: UIColor(red: 0.58, green: 0.72, blue: 0.84, alpha: 1),
+        skyBottom: UIColor(red: 0.88, green: 0.93, blue: 0.96, alpha: 1),
+        seaSurface: UIColor(red: 0.44, green: 0.63, blue: 0.74, alpha: 1),
+        seaDeep: UIColor(red: 0.12, green: 0.27, blue: 0.38, alpha: 1),
+        orb: UIColor(red: 1.00, green: 0.94, blue: 0.83, alpha: 1),
+        orbIsMoon: false,
+        cloud: UIColor(red: 0.95, green: 0.97, blue: 0.98, alpha: 1),
+        farIsland: UIColor(red: 0.72, green: 0.83, blue: 0.89, alpha: 1),
+        hasStars: false,
+        hasRain: false)
+
+    /// Kuzey ışıkları: gecenin üstünde yeşil perdeler.
+    /// Bulut rengi yeşile çekildiği için bulutlar ışık perdesi gibi okunuyor.
+    static let aurora = SkyTheme(
+        skyTop: UIColor(red: 0.03, green: 0.07, blue: 0.17, alpha: 1),
+        skyBottom: UIColor(red: 0.09, green: 0.32, blue: 0.25, alpha: 1),
+        seaSurface: UIColor(red: 0.08, green: 0.26, blue: 0.29, alpha: 1),
+        seaDeep: UIColor(red: 0.01, green: 0.05, blue: 0.10, alpha: 1),
+        orb: UIColor(red: 0.86, green: 0.95, blue: 0.88, alpha: 1),
+        orbIsMoon: true,
+        cloud: UIColor(red: 0.31, green: 0.66, blue: 0.55, alpha: 1),
+        farIsland: UIColor(red: 0.05, green: 0.13, blue: 0.21, alpha: 1),
+        hasStars: true,
+        hasRain: false)
+
+    /// Şafak: yolculuğun sonu, eve dönüş.
+    static let dawn = SkyTheme(
+        skyTop: UIColor(red: 0.29, green: 0.36, blue: 0.59, alpha: 1),
+        skyBottom: UIColor(red: 1.00, green: 0.77, blue: 0.54, alpha: 1),
+        seaSurface: UIColor(red: 0.79, green: 0.53, blue: 0.42, alpha: 1),
+        seaDeep: UIColor(red: 0.18, green: 0.17, blue: 0.32, alpha: 1),
+        orb: UIColor(red: 1.00, green: 0.85, blue: 0.54, alpha: 1),
+        orbIsMoon: false,
+        cloud: UIColor(red: 1.00, green: 0.84, blue: 0.75, alpha: 1),
+        farIsland: UIColor(red: 0.29, green: 0.24, blue: 0.36, alpha: 1),
+        hasStars: false,
+        hasRain: false)
 }

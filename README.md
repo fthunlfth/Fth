@@ -4,7 +4,7 @@ Hira, elinde küçük gri ayıcığı **Tedi** ile kayığında denizde ilerliyo
 Her bölümün sonunda bir hayvan kayığa katılıyor; ilki mavi gözlü beyaz
 kedi **Ted**.
 
-Yandan görünüş, tek dokunuşla zıplama, beş bölüm. SwiftUI + SpriteKit.
+Yandan görünüş, tek dokunuşla zıplama, on bölüm. SwiftUI + SpriteKit.
 Harici bağımlılık yok, **hiç varlık dosyası yok** — Hira, ayıcığı, kedi, kayık
 ve bütün engeller Swift içinde vektör şekillerle çiziliyor; sesler de aynı
 şekilde kodla üretiliyor. Proje klonlar klonlamaz çalışır.
@@ -54,7 +54,12 @@ hızla çarpılarak hesaplanıyor, yani hızı değiştirsen de bölüm aynı s�
 | 2 | Martı Koyu | öğle | martı | Yavru fok |
 | 3 | Gün Batımı Sığlığı | gün batımı | köpek balığı yüzgeci | Küçük penguen |
 | 4 | Ay Işığı Geçidi | gece | balık ağı, girdap | Deniz kaplumbağası |
-| 5 | Fırtına Burnu | fırtına | hepsi bir arada | Yavru köpek |
+| 5 | Fırtına Burnu | fırtına | — (hepsi bir arada) | Yavru köpek |
+| 6 | Sisli Geçit | sis | deniz mayını | Baykuş |
+| 7 | Mercan Sığlığı | turkuaz gündüz | uçan balık | Yengeç |
+| 8 | Buz Denizi | soğuk gündüz | buzdağı | Kutup tilkisi |
+| 9 | Kuzey Işıkları | yeşil gece | — | Yavru ahtapot |
+| 10 | Şafak Dönüşü | şafak | — (hepsi bir arada) | Su samuru |
 
 Her bölümün gökyüzü, deniz, bulut ve ada renkleri farklı. Bölüm sonunda küçük
 bir ada var; üstündeki hayvan kayığa atlıyor ve ekranda **"Ted artık macerada!"**
@@ -77,6 +82,9 @@ ile tanımlı (şimdilik sadece Ted); adı olmayanlar türüyle anılıyor.
 | **Balık ağı** | İki direk arası yüksek bariyer. Basılı tutarak zıplamak şart. |
 | **Martı** | Tek "zıplamama" engeli: yerinde kalırsan altından geçersin, zıplarsan çarparsın. |
 | **Girdap** | Alçak ama çok geniş. Kısa zıplama yetmez. |
+| **Deniz mayını** | Aşağı yukarı süzülüyor; aynı yerde iki kez aynı zıplama işe yaramıyor. |
+| **Uçan balık** | Sudan fırlayıp yay çizerek yaklaşıyor. Yüksekteyken altından geç, alçaktayken üstünden. |
+| **Buzdağı** | Kayadan çok daha yüksek. Basılı tutarak zıplamak şart. |
 
 Deniz yıldızları zıplama yayı boyunca üçlü diziliyor: hem +5 puan, hem
 cana giden sayaç, hem de nereden atlaman gerektiğini gösteren bir işaret.
@@ -184,4 +192,3 @@ Hayvanlar `AnimalNode.swift` içinde, her biri kendi `build...` fonksiyonunda.
 - [ ] Bölüm sonu canavarı (dev ahtapot?)
 - [ ] Toplanan hayvanların oyun içinde işe yaraması (kedi yıldız çekiyor vb.)
 - [ ] Game Center skor tablosu
-- [ ] Daha fazla bölüm ve hayvan

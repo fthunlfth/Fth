@@ -47,6 +47,17 @@ enum Palette {
     static let turtleSkin  = UIColor(red: 0.56, green: 0.74, blue: 0.45, alpha: 1)
     static let puppyFur    = UIColor(red: 0.78, green: 0.55, blue: 0.30, alpha: 1)
     static let puppyShade  = UIColor(red: 0.60, green: 0.40, blue: 0.20, alpha: 1)
+    static let owlFeather  = UIColor(red: 0.62, green: 0.48, blue: 0.36, alpha: 1)
+    static let owlBelly    = UIColor(red: 0.88, green: 0.80, blue: 0.68, alpha: 1)
+    static let owlBeak     = UIColor(red: 0.96, green: 0.74, blue: 0.30, alpha: 1)
+    static let crabShell   = UIColor(red: 0.92, green: 0.36, blue: 0.28, alpha: 1)
+    static let crabShade   = UIColor(red: 0.74, green: 0.24, blue: 0.18, alpha: 1)
+    static let foxFur      = UIColor(red: 0.96, green: 0.96, blue: 0.97, alpha: 1)
+    static let foxShade    = UIColor(red: 0.80, green: 0.84, blue: 0.90, alpha: 1)
+    static let octopus     = UIColor(red: 0.86, green: 0.44, blue: 0.62, alpha: 1)
+    static let octopusDark = UIColor(red: 0.68, green: 0.30, blue: 0.48, alpha: 1)
+    static let otterFur    = UIColor(red: 0.55, green: 0.40, blue: 0.29, alpha: 1)
+    static let otterBelly  = UIColor(red: 0.78, green: 0.66, blue: 0.53, alpha: 1)
     static let animalEye   = UIColor(red: 0.14, green: 0.13, blue: 0.16, alpha: 1)
 
     // MARK: - Engeller
@@ -62,6 +73,14 @@ enum Palette {
     static let seagull     = UIColor(red: 0.97, green: 0.97, blue: 0.98, alpha: 1)
     static let seagullBeak = UIColor(red: 1.00, green: 0.72, blue: 0.25, alpha: 1)
     static let whirlpool   = UIColor(red: 0.04, green: 0.18, blue: 0.30, alpha: 1)
+    static let ice         = UIColor(red: 0.85, green: 0.93, blue: 0.97, alpha: 1)
+    static let iceShade    = UIColor(red: 0.62, green: 0.78, blue: 0.88, alpha: 1)
+    static let iceDeep     = UIColor(red: 0.44, green: 0.63, blue: 0.76, alpha: 1)
+    static let mine        = UIColor(red: 0.20, green: 0.22, blue: 0.26, alpha: 1)
+    static let mineSpike   = UIColor(red: 0.36, green: 0.38, blue: 0.42, alpha: 1)
+    static let mineLight   = UIColor(red: 0.95, green: 0.28, blue: 0.24, alpha: 1)
+    static let flyingFish  = UIColor(red: 0.42, green: 0.68, blue: 0.86, alpha: 1)
+    static let flyingFin   = UIColor(red: 0.72, green: 0.88, blue: 0.96, alpha: 1)
 
     // MARK: - Ortak
     static let foam        = UIColor.white

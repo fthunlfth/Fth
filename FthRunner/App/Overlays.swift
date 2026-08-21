@@ -111,7 +111,7 @@ struct MenuOverlay: View {
                         .font(.system(size: 46, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                         .shadow(color: Palette.accent.opacity(0.85), radius: 18)
-                    Text("Hira, ayıcığı Tedi ve bir kayık.\nBeş bölüm, beş yeni arkadaş.")
+                    Text("Hira, ayıcığı Tedi ve bir kayık.\n\(Level.all.count) bölüm, \(Level.all.count) yeni arkadaş.")
                         .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundStyle(.white.opacity(0.75))
                 }
@@ -268,7 +268,7 @@ struct JourneyCompleteOverlay: View {
                 .foregroundStyle(Palette.gold)
                 .multilineTextAlignment(.center)
 
-            Text("Beş bölüm, beş arkadaş. Kayık artık kalabalık.")
+            Text("\(Level.all.count) bölüm, \(Level.all.count) arkadaş. Kayık artık kalabalık.")
                 .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundStyle(.white.opacity(0.8))
                 .multilineTextAlignment(.center)

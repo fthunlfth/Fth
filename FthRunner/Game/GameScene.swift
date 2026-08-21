@@ -363,6 +363,21 @@ final class GameScene: SKScene {
             let whirlpool = WhirlpoolNode()
             whirlpool.build(width: .random(in: 130...180))
             node = whirlpool
+
+        case .iceberg:
+            let iceberg = IcebergNode()
+            iceberg.build(width: .random(in: 54...78), height: .random(in: 96...132))
+            node = iceberg
+
+        case .seaMine:
+            let mine = SeaMineNode()
+            mine.build(bobSpeed: .random(in: 1.2...2.2))
+            node = mine
+
+        case .flyingFish:
+            let fish = FlyingFishNode()
+            fish.build(closingSpeed: .random(in: 45...90))
+            node = fish
         }
 
         node.worldX = worldX
