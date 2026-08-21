@@ -263,14 +263,14 @@ struct JourneyCompleteOverlay: View {
         OverlayShell {
             Spacer()
 
-            Text("YOLCULUK TAMAM")
+            Text("KARAYA VARDINIZ")
                 .font(.system(size: 32, weight: .black, design: .rounded))
                 .foregroundStyle(Palette.gold)
                 .multilineTextAlignment(.center)
 
-            Text("\(Level.all.count) bölüm, \(Level.all.count) arkadaş. Kayık artık kalabalık.")
+            Text("\(Level.all.count) bölüm, \(Level.all.count) arkadaş.\nHepsi Hira'ya teşekkür etti.")
                 .font(.system(size: 16, weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(.white.opacity(0.85))
                 .multilineTextAlignment(.center)
 
             CrewStrip(companions: companions, title: "MÜRETTEBAT")

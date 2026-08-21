@@ -150,7 +150,8 @@ enum Synth {
             .sparkle: sparkle(),
             .button: button(),
             .seagull: seagull(),
-            .extraLife: extraLife()
+            .extraLife: extraLife(),
+            .homecoming: homecoming()
         ], ambience: waves())
     }
 
@@ -238,6 +239,22 @@ enum Synth {
     static func button() -> [Float] {
         tone(duration: 0.09, from: 680, to: 760, wave: triangle,
              attack: 0.002, decay: 0.035, gain: 0.26)
+    }
+
+    /// Yolculuğun sonu: geniş, sıcak bir akor. Bölüm sonu fanfarından
+    /// uzun ve daha dolgun — bir kez duyulacak.
+    static func homecoming() -> [Float] {
+        sequence([
+            (0.00, tone(duration: 0.22, from: 262, wave: triangle, decay: 0.12, gain: 0.26)),
+            (0.14, tone(duration: 0.22, from: 330, wave: triangle, decay: 0.12, gain: 0.26)),
+            (0.28, tone(duration: 0.24, from: 392, wave: triangle, decay: 0.13, gain: 0.26)),
+            (0.42, tone(duration: 0.26, from: 523, wave: triangle, decay: 0.14, gain: 0.28)),
+            // Kapanış akoru: hepsi birlikte, uzun kuyrukla.
+            (0.58, tone(duration: 1.60, from: 262, wave: sine, decay: 0.75, gain: 0.20)),
+            (0.58, tone(duration: 1.60, from: 392, wave: sine, decay: 0.75, gain: 0.18)),
+            (0.58, tone(duration: 1.60, from: 523, wave: triangle, decay: 0.75, gain: 0.22)),
+            (0.58, tone(duration: 1.60, from: 659, wave: sine, decay: 0.75, gain: 0.16))
+        ])
     }
 
     /// Martı çığlığı: iki hızlı inen cıvıltı.

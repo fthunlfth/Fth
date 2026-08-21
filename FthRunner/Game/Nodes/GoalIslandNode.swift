@@ -2,12 +2,16 @@ import SpriteKit
 
 /// Bölümün sonundaki küçük ada. Üstünde o bölümün hayvanı bekliyor;
 /// kayık yanaşınca hayvan atlayıp mürettebata katılıyor.
-final class GoalIslandNode: SKNode {
+class GoalIslandNode: SKNode {
 
-    private(set) var animal: AnimalNode?
+    /// Adanın üstünde bekleyen hayvan. Alt sınıflar da yerleştirebilsin diye açık.
+    var animal: AnimalNode?
     /// Dünya koordinatındaki yeri; ekran konumu kameradan hesaplanıyor.
     var worldX: CGFloat = 0
     private let width: CGFloat = 150
+
+    /// Kayık, hedefin bu kadar solunda durur. Geniş kıyılar için artırılıyor.
+    var stopOffset: CGFloat { 130 }
 
     func build(reward: AnimalKind) {
         removeAllChildren()

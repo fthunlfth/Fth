@@ -431,6 +431,35 @@ final class BoatNode: SKNode {
         }
     }
 
+    /// Mürettebatın verilen katmandaki yerleri — karaya çıkarken lazım.
+    func crewPositions(in node: SKNode) -> [(kind: AnimalKind, point: CGPoint)] {
+        crewLayer.children.compactMap { child in
+            guard let animal = child as? AnimalNode else { return nil }
+            return (animal.kind, node.convert(animal.position, from: crewLayer))
+        }
+    }
+
+    /// Hayvanlar kayıktan indi; kayıktaki kopyalarını gizle.
+    func hideCrew() {
+        crewLayer.isHidden = true
+    }
+
+    /// Yeni tur başlarken mürettebat yerine dönsün.
+    func showCrew() {
+        crewLayer.isHidden = false
+    }
+
+    /// Teşekkürleri alırken Hira'nın sevinci.
+    func cheer() {
+        visual.removeAction(forKey: "cheer")
+        let hop = SKAction.sequence([
+            .moveBy(x: 0, y: 12, duration: 0.22),
+            .moveBy(x: 0, y: -12, duration: 0.22)
+        ])
+        hop.timingMode = .easeInEaseOut
+        visual.run(.repeat(hop, count: 5), withKey: "cheer")
+    }
+
     // MARK: - Su izi
 
     private func buildWake() {

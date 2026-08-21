@@ -137,6 +137,7 @@ final class GameScene: SKScene {
         boatY = waterLine
         boat.reset(at: CGPoint(x: boatScreenX, y: boatY))
         boat.setCompanions(state?.companions ?? [])
+        boat.showCrew()
         worldLayer.position = .zero
     }
 
@@ -405,7 +406,8 @@ final class GameScene: SKScene {
 
     private func updateGoal(deltaTime: TimeInterval) {
         if goalIsland == nil && cameraX > level.length - size.width {
-            let island = GoalIslandNode()
+            // Son bölümün sonunda küçük bir ada değil, yolculuğun bittiği kıyı var.
+            let island: GoalIslandNode = (state?.isFinalLevel == true) ? HomelandNode() : GoalIslandNode()
             island.build(reward: level.reward)
             island.worldX = level.length + Tuning.goalSlowdownDistance
             island.zPosition = 21
@@ -415,8 +417,8 @@ final class GameScene: SKScene {
 
         guard let island = goalIsland else { return }
 
-        // Adaya yaklaştıkça yavaşla, kayığın hizasında dur.
-        let stopScreenX = boatScreenX + 130
+        // Hedefe yaklaştıkça yavaşla, kayığın hizasında dur.
+        let stopScreenX = boatScreenX + island.stopOffset
         let remaining = (island.worldX - cameraX) - stopScreenX
         let ratio = max(0, min(1, remaining / Tuning.goalSlowdownDistance))
         // Taban hız olmadan son metreler asimptotik olarak sürünürdü.
@@ -441,17 +443,113 @@ final class GameScene: SKScene {
                                    y: boat.position.y - island.position.y + Tuning.boatHeight * 0.6)
         let reward = level.reward
 
+        let isFinale = state?.isFinalLevel == true
+
         island.launchAnimal(to: landingPoint) { [weak self] in
             guard let self else { return }
             self.boat.addCompanion(reward)
             self.confetti()
             self.showJoinBanner(text: reward.greeting)
-            // Kutlama sahnede bir an nefes alsın, bölüm sonu kartı sonra gelsin.
+
+            guard isFinale else {
+                // Kutlama sahnede bir an nefes alsın, bölüm sonu kartı sonra gelsin.
+                self.run(.sequence([
+                    .wait(forDuration: 1.3),
+                    .run { self.state?.completeLevel() }
+                ]))
+                return
+            }
+
             self.run(.sequence([
-                .wait(forDuration: 1.3),
-                .run { self.state?.completeLevel() }
+                .wait(forDuration: 1.7),
+                .run { self.playHomecoming(at: island) }
             ]))
         }
+    }
+
+    // MARK: - Karaya çıkış
+
+    /// Onuncu bölümün sonu: hayvanlar kayıktan karaya atlıyor, sıraya diziliyor
+    /// ve Hira'ya dönüp teşekkür ediyor.
+    private func playHomecoming(at land: GoalIslandNode) {
+        let crew = boat.crewPositions(in: worldLayer)
+        guard !crew.isEmpty else {
+            state?.completeLevel()
+            return
+        }
+        boat.hideCrew()
+
+        // Hayvanlar kıyının çocuğu oluyor: kara dalgayla inip kalkarken
+        // üstünde duranlar da onunla birlikte hareket etsin.
+        // Kıyı-yerel koordinatta orijin su hattı, kara sağa doğru uzanıyor.
+        let firstX: CGFloat = 48
+        let lastX = max(firstX + 40, size.width - 46 - land.position.x)
+        let step = crew.count > 1 ? (lastX - firstX) / CGFloat(crew.count - 1) : 0
+
+        for (index, member) in crew.enumerated() {
+            let node = AnimalNode(kind: member.kind, height: Tuning.boatHeight * 0.62)
+            node.position = land.convert(member.point, from: worldLayer)
+            node.zPosition = 26
+            node.xScale = -1                    // Karaya çıkınca Hira'ya dönüyorlar.
+            land.addChild(node)
+
+            // Öndeki ve arkadaki sıra: kalabalık düz bir çizgi gibi durmasın.
+            let target = CGPoint(x: firstX + CGFloat(index) * step,
+                                 y: index.isMultiple(of: 2) ? 8 : 26)
+
+            let hop = CGMutablePath()
+            hop.move(to: node.position)
+            hop.addQuadCurve(to: target,
+                             control: CGPoint(x: (node.position.x + target.x) / 2,
+                                              y: max(node.position.y, target.y) + 110))
+
+            node.run(.sequence([
+                .wait(forDuration: Double(index) * 0.15),
+                .group([
+                    .follow(hop, asOffset: false, orientToPath: false, duration: 0.52),
+                    .run { SoundEngine.shared.play(.splash, volume: 0.35) }
+                ]),
+                .run { [weak self] in
+                    guard let self else { return }
+                    self.floatHeart(from: self.worldLayer.convert(target, from: land))
+                }
+            ]))
+        }
+
+        let lastLanding = Double(crew.count - 1) * 0.15 + 0.6
+        run(.sequence([
+            .wait(forDuration: lastLanding + 0.35),
+            .run { [weak self] in
+                guard let self else { return }
+                self.boat.cheer()
+                self.confetti()
+                self.showBanner(text: "TEŞEKKÜRLER HİRA!", tint: Palette.lifeVest)
+                SoundEngine.shared.play(.homecoming)
+                Haptics.celebrate()
+            },
+            .wait(forDuration: 2.6),
+            .run { [weak self] in self?.state?.completeLevel() }
+        ]))
+    }
+
+    /// Teşekkür eden hayvanın üstünden süzülen kalp.
+    private func floatHeart(from point: CGPoint) {
+        let heart = SKShapeNode(path: GameScene.heartPath(size: 18))
+        heart.fillColor = Palette.heart
+        heart.strokeColor = .white
+        heart.lineWidth = 1.5
+        heart.position = CGPoint(x: point.x, y: point.y + 30)
+        heart.zPosition = 30
+        heart.alpha = 0
+        worldLayer.addChild(heart)
+        heart.run(.sequence([
+            .group([
+                .fadeAlpha(to: 1, duration: 0.2),
+                .moveBy(x: .random(in: -14...14), y: 70, duration: 1.4),
+                .sequence([.wait(forDuration: 0.8), .fadeOut(withDuration: 0.6)])
+            ]),
+            .removeFromParent()
+        ]))
     }
 
     /// Yeni arkadaş kayığa bindiği anda üstünde beliren şerit.

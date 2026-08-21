@@ -29,6 +29,8 @@ enum Palette {
     static let clogShade   = UIColor(red: 0.80, green: 0.72, blue: 0.06, alpha: 1)
     static let lifeVest    = UIColor(red: 1.00, green: 0.68, blue: 0.20, alpha: 1)
     static let sand        = UIColor(red: 0.93, green: 0.86, blue: 0.68, alpha: 1)
+    /// Kıyıdaki çiçekler için pembe.
+    static let dress2      = UIColor(red: 0.98, green: 0.45, blue: 0.62, alpha: 1)
 
     // MARK: - Ayıcık
     static let teddy       = UIColor(red: 0.66, green: 0.66, blue: 0.69, alpha: 1)

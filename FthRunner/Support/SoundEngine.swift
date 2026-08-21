@@ -21,6 +21,7 @@ final class SoundEngine {
         case button
         case seagull
         case extraLife
+        case homecoming
     }
 
     /// Sessize alma tercihi cihazda saklanıyor.
